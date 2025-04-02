@@ -1,0 +1,611 @@
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import {
+  ClockIcon,
+  BookOpenIcon,
+  CheckCircleIcon,
+  BoltIcon,
+  CalendarIcon,
+  MusicalNoteIcon,
+  FireIcon,
+  ArrowPathIcon,
+  ArrowRightIcon,
+  ChatBubbleLeftRightIcon,
+} from "@heroicons/react/24/outline";
+
+// Import stores
+import { useUserStore } from "../store/userStore";
+import { usePlannerStore } from "../store/plannerStore";
+import { useTaskStore } from "../store/taskStore";
+import { usePomodoroStore } from "../store/pomodoroStore";
+import { useHomeStore } from "../store/homeStore";
+
+// Import types
+import { Task } from "../types/task";
+import { StudySession } from "../types/planner";
+
+const HomePage: React.FC = () => {
+  // Get user data from store
+  const { profile } = useUserStore();
+
+  // Get data from stores
+  const getUpcomingSessions = usePlannerStore(
+    (state) => state.getUpcomingSessions
+  );
+  const getSessionStats = usePlannerStore((state) => state.getSessionStats);
+  const getTaskSummary = useTaskStore((state) => state.getTaskSummary);
+  const getUpcomingTasks = useTaskStore((state) => state.getUpcomingTasks);
+  const getFocusInsights = usePomodoroStore((state) => state.getFocusInsights);
+
+  // Get home page data
+  const {
+    quotes,
+    studyTips,
+    musicPlaylists,
+    getRandomQuote,
+    getRandomStudyTip,
+    preferences,
+  } = useHomeStore();
+
+  // State variables
+  const [stats, setStats] = useState({
+    totalHours: 0,
+    thisWeekHours: 0,
+    tasksCompleted: 0,
+    tasksPending: 0,
+    currentStreak: 0,
+    focusScore: 0,
+  });
+
+  const [upcomingSessions, setUpcomingSessions] = useState<StudySession[]>([]);
+  const [upcomingTasks, setUpcomingTasks] = useState<Task[]>([]);
+  const [currentQuote, setCurrentQuote] = useState(
+    quotes[0] || { text: "", author: "" }
+  );
+  const [currentTip, setCurrentTip] = useState(
+    studyTips[0] || { text: "", category: "" }
+  );
+  const [playlists, setPlaylists] = useState(musicPlaylists);
+
+  // Load data on component mount
+  useEffect(() => {
+    try {
+      // Get session stats
+      let sessionStats;
+      try {
+        sessionStats = getSessionStats();
+      } catch (error) {
+        console.error("Error getting session stats:", error);
+        sessionStats = { totalHours: 0, thisWeekHours: 0 };
+      }
+
+      // Get focus insights
+      let focusInsights;
+      try {
+        focusInsights = getFocusInsights();
+      } catch (error) {
+        console.error("Error getting focus insights:", error);
+        focusInsights = { currentStreak: 0, focusScore: 0 };
+      }
+
+      // Get task summary
+      let taskSummary;
+      try {
+        taskSummary = getTaskSummary();
+      } catch (error) {
+        console.error("Error getting task summary:", error);
+        taskSummary = { completed: 0, pending: 0 };
+      }
+
+      // Update stats
+      setStats({
+        totalHours: sessionStats?.totalHours || 0,
+        thisWeekHours: sessionStats?.thisWeekHours || 0,
+        tasksCompleted: taskSummary?.completed || 0,
+        tasksPending: taskSummary?.pending || 0,
+        currentStreak: focusInsights?.currentStreak || 0,
+        focusScore: focusInsights?.focusScore || 0,
+      });
+
+      // Get upcoming sessions
+      try {
+        const sessions = getUpcomingSessions();
+        setUpcomingSessions(sessions || []);
+      } catch (error) {
+        console.error("Error getting upcoming sessions:", error);
+        setUpcomingSessions([]);
+      }
+
+      // Get upcoming tasks
+      try {
+        const tasks = getUpcomingTasks();
+        setUpcomingTasks((tasks || []).slice(0, 5));
+      } catch (error) {
+        console.error("Error getting upcoming tasks:", error);
+        setUpcomingTasks([]);
+      }
+
+      // Get random quote and tip
+      try {
+        refreshQuote();
+        refreshTip();
+      } catch (error) {
+        console.error("Error refreshing quotes/tips:", error);
+      }
+    } catch (error) {
+      console.error("Error loading homepage data:", error);
+      // Set defaults in case of error
+      setStats({
+        totalHours: 0,
+        thisWeekHours: 0,
+        tasksCompleted: 0,
+        tasksPending: 0,
+        currentStreak: 0,
+        focusScore: 0,
+      });
+    }
+  }, [
+    getSessionStats,
+    getFocusInsights,
+    getTaskSummary,
+    getUpcomingSessions,
+    getUpcomingTasks,
+    getRandomQuote,
+    getRandomStudyTip,
+  ]);
+
+  // Get greeting based on time of day
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 18) return "Good afternoon";
+    return "Good evening";
+  };
+
+  // Format date to display day of week and date
+  const formatDate = () => {
+    return new Date().toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
+  // Refresh quote
+  const refreshQuote = () => {
+    setCurrentQuote(getRandomQuote());
+  };
+
+  // Refresh tip
+  const refreshTip = () => {
+    setCurrentTip(getRandomStudyTip());
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="p-6 max-w-7xl mx-auto"
+    >
+      {/* Header Section */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
+          {getGreeting()}, {profile.username}!
+        </h1>
+        <p className="text-gray-600 dark:text-gray-300 mt-1">{formatDate()}</p>
+      </div>
+
+      {/* Quote Card */}
+      <motion.div
+        className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg p-6 text-white mb-8 shadow-lg"
+        whileHover={{ y: -5 }}
+        transition={{ duration: 0.3 }}
+      >
+        <div className="flex justify-between items-start">
+          <div>
+            <p className="text-xl font-medium mb-2">"{currentQuote.text}"</p>
+            <p className="text-white text-opacity-80">
+              — {currentQuote.author}
+            </p>
+          </div>
+          <button
+            onClick={refreshQuote}
+            className="p-2 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 transition-all"
+          >
+            <ArrowPathIcon className="w-5 h-5 text-white" />
+          </button>
+        </div>
+      </motion.div>
+
+      {/* Progress Overview */}
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">
+          Your Progress
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Study Hours */}
+          <motion.div
+            className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow"
+            whileHover={{ y: -5 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="flex items-center mb-2">
+              <ClockIcon className="w-5 h-5 text-blue-500 mr-2" />
+              <h3 className="font-medium text-gray-700 dark:text-gray-200">
+                Study Hours
+              </h3>
+            </div>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              {stats.totalHours}
+            </p>
+            <p className="text-gray-500 dark:text-gray-400 text-sm">
+              {stats.thisWeekHours} hours this week
+            </p>
+          </motion.div>
+
+          {/* Tasks Completed */}
+          <motion.div
+            className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow"
+            whileHover={{ y: -5 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="flex items-center mb-2">
+              <CheckCircleIcon className="w-5 h-5 text-green-500 mr-2" />
+              <h3 className="font-medium text-gray-700 dark:text-gray-200">
+                Tasks Completed
+              </h3>
+            </div>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              {stats.tasksCompleted}
+            </p>
+            <p className="text-gray-500 dark:text-gray-400 text-sm">
+              {stats.tasksPending} pending
+            </p>
+          </motion.div>
+
+          {/* Current Streak */}
+          <motion.div
+            className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow"
+            whileHover={{ y: -5 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="flex items-center mb-2">
+              <FireIcon className="w-5 h-5 text-orange-500 mr-2" />
+              <h3 className="font-medium text-gray-700 dark:text-gray-200">
+                Current Streak
+              </h3>
+            </div>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              {stats.currentStreak} days
+            </p>
+            <p className="text-gray-500 dark:text-gray-400 text-sm">
+              Keep it going!
+            </p>
+          </motion.div>
+
+          {/* Focus Score */}
+          <motion.div
+            className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow"
+            whileHover={{ y: -5 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="flex items-center mb-2">
+              <BoltIcon className="w-5 h-5 text-purple-500 mr-2" />
+              <h3 className="font-medium text-gray-700 dark:text-gray-200">
+                Focus Score
+              </h3>
+            </div>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              {stats.focusScore}
+            </p>
+            <p className="text-gray-500 dark:text-gray-400 text-sm">
+              {stats.focusScore >= 80 ? "Excellent!" : "Good progress!"}
+            </p>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left Column */}
+        <div className="lg:col-span-2 space-y-8">
+          {/* Quick Actions */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow">
+            <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">
+              Quick Actions
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {/* Dashboard Action */}
+              <Link to="/dashboard" className="block">
+                <motion.div
+                  className="p-4 bg-blue-50 dark:bg-blue-900 dark:bg-opacity-20 rounded-lg text-center hover:bg-blue-100 dark:hover:bg-blue-900 dark:hover:bg-opacity-30 transition-colors"
+                  whileHover={{ y: -3, scale: 1.05 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <div className="w-10 h-10 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <BookOpenIcon className="w-5 h-5 text-blue-600 dark:text-blue-300" />
+                  </div>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                    Dashboard
+                  </p>
+                </motion.div>
+              </Link>
+
+              {/* Task Manager Action */}
+              <Link to="/tasks" className="block">
+                <motion.div
+                  className="p-4 bg-green-50 dark:bg-green-900 dark:bg-opacity-20 rounded-lg text-center hover:bg-green-100 dark:hover:bg-green-900 dark:hover:bg-opacity-30 transition-colors"
+                  whileHover={{ y: -3, scale: 1.05 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <div className="w-10 h-10 bg-green-100 dark:bg-green-800 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <CheckCircleIcon className="w-5 h-5 text-green-600 dark:text-green-300" />
+                  </div>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                    Task Manager
+                  </p>
+                </motion.div>
+              </Link>
+
+              {/* Pomodoro Timer Action */}
+              <Link to="/pomodoro" className="block">
+                <motion.div
+                  className="p-4 bg-red-50 dark:bg-red-900 dark:bg-opacity-20 rounded-lg text-center hover:bg-red-100 dark:hover:bg-red-900 dark:hover:bg-opacity-30 transition-colors"
+                  whileHover={{ y: -3, scale: 1.05 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <div className="w-10 h-10 bg-red-100 dark:bg-red-800 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <ClockIcon className="w-5 h-5 text-red-600 dark:text-red-300" />
+                  </div>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                    Pomodoro
+                  </p>
+                </motion.div>
+              </Link>
+
+              {/* Study Planner Action */}
+              <Link to="/planner" className="block">
+                <motion.div
+                  className="p-4 bg-purple-50 dark:bg-purple-900 dark:bg-opacity-20 rounded-lg text-center hover:bg-purple-100 dark:hover:bg-purple-900 dark:hover:bg-opacity-30 transition-colors"
+                  whileHover={{ y: -3, scale: 1.05 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <div className="w-10 h-10 bg-purple-100 dark:bg-purple-800 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <CalendarIcon className="w-5 h-5 text-purple-600 dark:text-purple-300" />
+                  </div>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                    Study Planner
+                  </p>
+                </motion.div>
+              </Link>
+            </div>
+          </div>
+
+          {/* Today's Study Tip */}
+          <motion.div
+            className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow"
+            whileHover={{ y: -3 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
+                Today's Study Tip
+              </h2>
+              <button
+                onClick={refreshTip}
+                className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              >
+                <ArrowPathIcon className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+              </button>
+            </div>
+            <div className="flex items-start space-x-4">
+              <div className="bg-yellow-100 dark:bg-yellow-900 dark:bg-opacity-30 p-3 rounded-full">
+                <ChatBubbleLeftRightIcon className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+              </div>
+              <div>
+                <p className="text-gray-600 dark:text-gray-300 mb-2">
+                  {currentTip.text}
+                </p>
+                <span className="inline-block px-2 py-1 text-xs bg-yellow-100 dark:bg-yellow-900 dark:bg-opacity-30 text-yellow-800 dark:text-yellow-300 rounded">
+                  {currentTip.category}
+                </span>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Music Widget */}
+          <motion.div
+            className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow"
+            whileHover={{ y: -3 }}
+            transition={{ duration: 0.3 }}
+          >
+            <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">
+              Focus Music
+            </h2>
+            <div className="space-y-3">
+              {playlists.slice(0, 3).map((playlist, index) => (
+                <a
+                  key={index}
+                  href={playlist.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                >
+                  <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-800 rounded-full flex items-center justify-center mr-3">
+                    <MusicalNoteIcon className="w-5 h-5 text-indigo-600 dark:text-indigo-300" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-800 dark:text-white">
+                      {playlist.name}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {playlist.category}
+                    </p>
+                  </div>
+                </a>
+              ))}
+              <Link
+                to="/music"
+                className="text-sm text-indigo-600 dark:text-indigo-400 flex items-center hover:underline"
+              >
+                View all playlists <ArrowRightIcon className="w-3 h-3 ml-1" />
+              </Link>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Right Column */}
+        <div className="space-y-8">
+          {/* Welcome Card */}
+          <motion.div
+            className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg p-6 text-white shadow"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+          >
+            <h2 className="text-xl font-bold mb-2">Welcome to TrackYouStudy</h2>
+            <p className="text-white text-opacity-90 mb-4">
+              Track your progress, manage your tasks, and boost your
+              productivity.
+            </p>
+            <Link
+              to="/profile"
+              className="inline-flex items-center bg-white text-indigo-600 px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-50 transition-colors"
+            >
+              View Your Profile <ArrowRightIcon className="w-4 h-4 ml-1" />
+            </Link>
+          </motion.div>
+
+          {/* Upcoming Tasks */}
+          <motion.div
+            className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
+                Upcoming Tasks
+              </h2>
+              <Link
+                to="/tasks"
+                className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                View all
+              </Link>
+            </div>
+
+            {upcomingTasks.length > 0 ? (
+              <div className="space-y-3">
+                {upcomingTasks.map((task, index) => (
+                  <div
+                    key={index}
+                    className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border-l-4 border-blue-500"
+                  >
+                    <p className="font-medium text-gray-800 dark:text-white">
+                      {task.title}
+                    </p>
+                    <div className="flex justify-between items-center mt-1">
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        Due: {new Date(task.dueDate).toLocaleDateString()}
+                      </span>
+                      <span
+                        className={`text-xs px-2 py-1 rounded ${
+                          task.priority === "high"
+                            ? "bg-red-100 dark:bg-red-900 dark:bg-opacity-30 text-red-800 dark:text-red-300"
+                            : task.priority === "medium"
+                            ? "bg-yellow-100 dark:bg-yellow-900 dark:bg-opacity-30 text-yellow-800 dark:text-yellow-300"
+                            : "bg-green-100 dark:bg-green-900 dark:bg-opacity-30 text-green-800 dark:text-green-300"
+                        }`}
+                      >
+                        {task.priority.charAt(0).toUpperCase() +
+                          task.priority.slice(1)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 dark:text-gray-400 text-center py-4">
+                No upcoming tasks. Create a new task to get started.
+              </p>
+            )}
+
+            <Link
+              to="/tasks/new"
+              className="mt-4 block w-full bg-blue-50 dark:bg-blue-900 dark:bg-opacity-20 text-blue-600 dark:text-blue-400 text-center py-2 rounded-md text-sm font-medium hover:bg-blue-100 dark:hover:bg-blue-900 dark:hover:bg-opacity-30 transition-colors"
+            >
+              Create New Task
+            </Link>
+          </motion.div>
+
+          {/* Upcoming Sessions */}
+          <motion.div
+            className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.5 }}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
+                Study Sessions
+              </h2>
+              <Link
+                to="/planner"
+                className="text-sm text-purple-600 dark:text-purple-400 hover:underline"
+              >
+                View all
+              </Link>
+            </div>
+
+            {upcomingSessions.length > 0 ? (
+              <div className="space-y-3">
+                {upcomingSessions.map((session, index) => (
+                  <div
+                    key={index}
+                    className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border-l-4 border-purple-500"
+                  >
+                    <p className="font-medium text-gray-800 dark:text-white">
+                      {session.title}
+                    </p>
+                    <div className="flex justify-between items-center mt-1">
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {new Date(session.startTime).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}{" "}
+                        -
+                        {new Date(session.endTime).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                      <span className="text-xs bg-purple-100 dark:bg-purple-900 dark:bg-opacity-30 text-purple-800 dark:text-purple-300 px-2 py-1 rounded">
+                        {session.category}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 dark:text-gray-400 text-center py-4">
+                No upcoming sessions. Plan a study session to get started.
+              </p>
+            )}
+
+            <Link
+              to="/planner/new"
+              className="mt-4 block w-full bg-purple-50 dark:bg-purple-900 dark:bg-opacity-20 text-purple-600 dark:text-purple-400 text-center py-2 rounded-md text-sm font-medium hover:bg-purple-100 dark:hover:bg-purple-900 dark:hover:bg-opacity-30 transition-colors"
+            >
+              Schedule Session
+            </Link>
+          </motion.div>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+export default HomePage; 
