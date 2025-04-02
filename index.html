@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" href="/icons/icon-192x192.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TrackYouStudy - Track Your Study Habits</title>
+
+  <!-- Meta tags for SEO and sharing -->
+  <meta name="description"
+    content="A comprehensive study habit tracking app with pomodoro timer, streaks, and motivational features." />
+  <meta name="keywords" content="study tracker, pomodoro, productivity, habit tracker, education" />
+  <meta name="author" content="TrackYouStudy Team" />
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://trackyoustudy.vercel.app/" />
+  <meta property="og:title" content="TrackYouStudy - Track Your Study Habits" />
+  <meta property="og:description"
+    content="A comprehensive study habit tracking app with pomodoro timer, streaks, and motivational features." />
+  <meta property="og:image" content="/icons/social-preview.png" />
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:url" content="https://trackyoustudy.vercel.app/" />
+  <meta property="twitter:title" content="TrackYouStudy - Track Your Study Habits" />
+  <meta property="twitter:description"
+    content="A comprehensive study habit tracking app with pomodoro timer, streaks, and motivational features." />
+  <meta property="twitter:image" content="/icons/social-preview.png" />
+
+  <!-- PWA support -->
+  <meta name="theme-color" content="#4f46e5" />
+  <link rel="manifest" href="/TrackYourStudy/manifest.json" />
+  <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+
+  <!-- Preload fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <script type="module" crossorigin src="/TrackYourStudy/assets/index-c0sip7aD.js"></script>
+  <link rel="stylesheet" crossorigin href="/TrackYourStudy/assets/index-Hb1iv12W.css">
+</head>
+
+<body>
+  <div id="root"></div>
+
+  <!-- PWA registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(registration => {
+            console.log('ServiceWorker registered with scope:', registration.scope);
+          })
+          .catch(error => {
+            console.log('ServiceWorker registration failed:', error);
+          });
+      });
+    }
+  </script>
+</body>
+
+</html>

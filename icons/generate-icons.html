@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate PWA Icons</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #4f46e5;
+        }
+
+        .canvases {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .icon-container {
+            border: 1px solid #eee;
+            padding: 10px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        button {
+            background-color: #4f46e5;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .download-all {
+            background-color: #16a34a;
+        }
+
+        .instructions {
+            background-color: #f8fafc;
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 4px solid #4f46e5;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>TrackYouStudy Icon Generator</h1>
+
+    <div class="instructions">
+        <p>This tool generates all the necessary icons for the TrackYouStudy PWA. Click "Generate Icons" to create the
+            icons, then click "Download All" to download a zip file containing all icons. Place these files in the
+            public/icons folder.</p>
+    </div>
+
+    <div>
+        <button id="generate">Generate Icons</button>
+        <button id="download-all" class="download-all" disabled>Download All</button>
+    </div>
+
+    <div class="canvases" id="canvases"></div>
+
+    <script>
+        // Icon sizes defined in manifest.json
+        const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+        const canvases = {};
+        let generated = false;
+
+        // Generate all icons
+        document.getElementById('generate').addEventListener('click', () => {
+            const container = document.getElementById('canvases');
+            container.innerHTML = '';
+
+            // Create each icon
+            sizes.forEach(size => {
+                const iconContainer = document.createElement('div');
+                iconContainer.className = 'icon-container';
+
+                // Create canvas
+                const canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                canvas.title = `icon-${size}x${size}.png`;
+                canvas.id = `icon-${size}`;
+
+                // Draw icon
+                drawIcon(canvas, size);
+
+                // Add download button
+                const downloadBtn = document.createElement('button');
+                downloadBtn.textContent = `Download ${size}x${size}`;
+                downloadBtn.addEventListener('click', () => {
+                    downloadIcon(canvas);
+                });
+
+                // Add to page
+                iconContainer.appendChild(canvas);
+                iconContainer.appendChild(document.createElement('br'));
+                iconContainer.appendChild(downloadBtn);
+                container.appendChild(iconContainer);
+
+                // Store canvas reference
+                canvases[size] = canvas;
+            });
+
+            // Also generate social preview image
+            const previewContainer = document.createElement('div');
+            previewContainer.className = 'icon-container';
+
+            const previewCanvas = document.createElement('canvas');
+            previewCanvas.width = 1200;
+            previewCanvas.height = 630;
+            previewCanvas.title = 'social-preview.png';
+            previewCanvas.id = 'social-preview';
+            previewCanvas.style.width = '100%';
+            previewCanvas.style.maxWidth = '300px';
+
+            // Draw preview image
+            drawSocialPreview(previewCanvas);
+
+            // Add download button
+            const downloadPreviewBtn = document.createElement('button');
+            downloadPreviewBtn.textContent = 'Download Preview';
+            downloadPreviewBtn.addEventListener('click', () => {
+                downloadIcon(previewCanvas);
+            });
+
+            // Add to page
+            previewContainer.appendChild(previewCanvas);
+            previewContainer.appendChild(document.createElement('br'));
+            previewContainer.appendChild(downloadPreviewBtn);
+            container.appendChild(previewContainer);
+
+            // Enable download all button
+            document.getElementById('download-all').disabled = false;
+            generated = true;
+        });
+
+        // Download all icons as individual files
+        document.getElementById('download-all').addEventListener('click', () => {
+            if (!generated) return;
+
+            // Download each icon
+            sizes.forEach(size => {
+                downloadIcon(canvases[size]);
+            });
+
+            // Download social preview
+            downloadIcon(document.getElementById('social-preview'));
+        });
+
+        // Draw icon on canvas
+        function drawIcon(canvas, size) {
+            const ctx = canvas.getContext('2d');
+
+            // Background gradient
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#4f46e5');
+            gradient.addColorStop(1, '#818cf8');
+
+            // Fill background
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+
+            // Draw a border
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.lineWidth = Math.max(1, size / 48);
+            ctx.strokeRect(size * 0.1, size * 0.1, size * 0.8, size * 0.8);
+
+            // Add text
+            const fontSize = Math.max(10, size / 5);
+            ctx.font = `bold ${fontSize}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = 'white';
+
+            // Draw "TYS" text (TrackYouStudy initials)
+            ctx.fillText('TYS', size / 2, size / 2);
+        }
+
+        // Draw social preview image
+        function drawSocialPreview(canvas) {
+            const width = canvas.width;
+            const height = canvas.height;
+            const ctx = canvas.getContext('2d');
+
+            // Background gradient
+            const gradient = ctx.createLinearGradient(0, 0, width, height);
+            gradient.addColorStop(0, '#4f46e5');
+            gradient.addColorStop(1, '#818cf8');
+
+            // Fill background
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, width, height);
+
+            // Add app name
+            ctx.font = 'bold 72px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = 'white';
+            ctx.fillText('TrackYouStudy', width / 2, height / 2 - 40);
+
+            // Add tagline
+            ctx.font = '36px Arial';
+            ctx.fillText('Track Your Study Habits', width / 2, height / 2 + 40);
+        }
+
+        // Download canvas as PNG
+        function downloadIcon(canvas) {
+            const link = document.createElement('a');
+            link.download = canvas.title;
+            link.href = canvas.toDataURL('image/png');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+
+</html>
