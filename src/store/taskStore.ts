@@ -60,7 +60,7 @@ interface TaskState {
 
   // Filtering and sorting
   setActiveFilter: (filter: Partial<TaskState["activeFilters"]>) => void;
-  applyFilters: () => void;
+  applyFilters: (customFilters?: Partial<TaskState["activeFilters"]>) => Task[];
 
   // Notes management
   addTaskNote: (id: string, note: string) => void;
@@ -108,7 +108,8 @@ export const useTaskStore = create<TaskState>()(
 
         set((state) => {
           const tasks = [...state.tasks, newTask];
-          return { tasks, filteredTasks: get().applyFilters() };
+          const filteredTasks = get().applyFilters();
+          return { tasks, filteredTasks };
         });
       },
 
@@ -117,14 +118,16 @@ export const useTaskStore = create<TaskState>()(
           const tasks = state.tasks.map((task) =>
             task.id === id ? { ...task, ...updatedTask } : task
           );
-          return { tasks, filteredTasks: get().applyFilters() };
+          const filteredTasks = get().applyFilters();
+          return { tasks, filteredTasks };
         });
       },
 
       deleteTask: (id) => {
         set((state) => {
           const tasks = state.tasks.filter((task) => task.id !== id);
-          return { tasks, filteredTasks: get().applyFilters() };
+          const filteredTasks = get().applyFilters();
+          return { tasks, filteredTasks };
         });
       },
 
@@ -221,7 +224,7 @@ export const useTaskStore = create<TaskState>()(
         });
       },
 
-      applyFilters: (customFilters) => {
+      applyFilters: (customFilters?) => {
         const filters = customFilters || get().activeFilters;
         const {
           status,

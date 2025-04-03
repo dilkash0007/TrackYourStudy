@@ -82,7 +82,7 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
       {/* Mobile Header */}
-      <header className="bg-white dark:bg-gray-800 shadow lg:hidden px-4 py-3 fixed top-0 left-0 right-0 z-20">
+      <header className="bg-white dark:bg-gray-800 shadow lg:hidden px-1.5 py-3 fixed top-0 left-0 right-0 z-20">
         <div className="flex justify-between items-center">
           <div className="flex items-center">
             <Link
@@ -301,7 +301,7 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
       {/* Main Content */}
       <div className="lg:pl-64 flex flex-col flex-1">
         <main className="flex-1 pt-16 lg:pt-0 pb-6">
-          <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+          <div className="px-1.5 sm:px-6 lg:px-8 max-w-7xl mx-auto">
             {children}
           </div>
         </main>

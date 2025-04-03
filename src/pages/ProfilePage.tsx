@@ -30,7 +30,11 @@ import {
   Cog6ToothIcon,
   ArrowPathIcon,
 } from "@heroicons/react/24/outline";
-import { getAllAvatars, getRandomAvatar } from "../utils/avatarUtils";
+import {
+  getAllAvatars,
+  getRandomAvatar,
+  getAvatarPath,
+} from "../utils/avatarUtils";
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
@@ -125,7 +129,7 @@ export const ProfilePage = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 mb-16">
+    <div className="container mx-auto px-1.5 py-8 mb-16">
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Profile Card */}
         <div className="lg:w-1/3">
@@ -174,7 +178,7 @@ export const ProfilePage = () => {
                             "https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff";
                           // Try to load a default avatar as another fallback
                           setTimeout(() => {
-                            const defaultAvatar = "/src/avtars/avatar_1.jpeg";
+                            const defaultAvatar = getAvatarPath(1);
                             if (avatar !== defaultAvatar) {
                               setAvatar(defaultAvatar);
                             }

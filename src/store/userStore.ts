@@ -144,7 +144,7 @@ const createDefaultProfile = (): UserProfile => ({
   email: "student@example.com",
   firstName: "",
   lastName: "",
-  profilePicture: null,
+  profilePicture: undefined,
   bio: "I am using TrackYouStudy to improve my academic performance.",
   subjects: ["General"],
   preferences: {
