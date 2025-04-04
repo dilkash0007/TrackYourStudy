@@ -241,20 +241,72 @@ interface UserState {
   name: string;
   email: string;
   avatar: string;
+  isAuthenticated: boolean;
+  password: string;
+  bio: string;
+  educationLevel: string;
+  institution: string;
+  studyField: string;
+  birthday: string;
+  phoneNumber: string;
+  location: string;
   setUserProfile: (name: string, email: string) => void;
+  setDetailedProfile: (profileData: {
+    bio?: string;
+    educationLevel?: string;
+    institution?: string;
+    studyField?: string;
+    birthday?: string;
+    phoneNumber?: string;
+    location?: string;
+  }) => void;
   setAvatar: (avatar: string) => void;
   randomizeAvatar: () => void;
+  login: (email: string, password: string) => boolean;
+  signup: (name: string, email: string, password: string) => void;
+  logout: () => void;
 }
 
 export const useUserStore = create<UserState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       name: "",
       email: "",
       avatar: getRandomAvatar(), // Set a random avatar by default
+      isAuthenticated: false,
+      password: "",
+      bio: "",
+      educationLevel: "",
+      institution: "",
+      studyField: "",
+      birthday: "",
+      phoneNumber: "",
+      location: "",
       setUserProfile: (name: string, email: string) => set({ name, email }),
+      setDetailedProfile: (profileData) =>
+        set((state) => ({ ...state, ...profileData })),
       setAvatar: (avatar: string) => set({ avatar }),
       randomizeAvatar: () => set({ avatar: getRandomAvatar() }),
+      login: (email: string, password: string) => {
+        const state = get();
+        // In a real app, this would validate against a backend
+        if (state.email === email && state.password === password) {
+          set({ isAuthenticated: true });
+          return true;
+        }
+        // If this is the first login and no account exists yet
+        if (!state.email && !state.password) {
+          set({ email, password, isAuthenticated: true });
+          return true;
+        }
+        return false;
+      },
+      signup: (name: string, email: string, password: string) => {
+        set({ name, email, password, isAuthenticated: true });
+      },
+      logout: () => {
+        set({ isAuthenticated: false });
+      },
     }),
     {
       name: "user-storage",

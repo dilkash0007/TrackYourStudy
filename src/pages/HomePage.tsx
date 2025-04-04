@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   ClockIcon,
@@ -32,10 +32,31 @@ import { LineChart } from "../components/charts/LineChart";
 import { SessionCard } from "../components/planner/SessionCard";
 import { PomodoroTimer } from "../components/pomodoro/PomodoroTimer";
 import { StreakCalendar } from "../components/stats/StreakCalendar";
+import { LoginPrompt } from "../components/ui/LoginPrompt";
 
 const HomePage: React.FC = () => {
+  const navigate = useNavigate();
+
   // Get user data from store
-  const { name } = useUserStore();
+  const { name, isAuthenticated } = useUserStore();
+
+  // Login prompt state
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [loginPromptMessage, setLoginPromptMessage] = useState(
+    "Please login or create an account to continue."
+  );
+
+  // Function to handle features that require authentication
+  const handleAuthRequired = (feature: string) => {
+    if (!isAuthenticated) {
+      setLoginPromptMessage(
+        `Please login or create an account to use the ${feature} feature.`
+      );
+      setShowLoginPrompt(true);
+      return true;
+    }
+    return false;
+  };
 
   // Ref to track initialization
   const initialized = useRef(false);
@@ -192,6 +213,27 @@ const HomePage: React.FC = () => {
     ],
   };
 
+  // Handle task card click
+  const handleTaskCardClick = (taskId: string) => {
+    if (!handleAuthRequired("Tasks")) {
+      navigate("/tasks");
+    }
+  };
+
+  // Handle session card click
+  const handleSessionCardClick = (sessionId: string) => {
+    if (!handleAuthRequired("Planner")) {
+      navigate("/planner");
+    }
+  };
+
+  // Handle pomodoro start
+  const handlePomodoroStart = () => {
+    if (!handleAuthRequired("Pomodoro")) {
+      navigate("/pomodoro");
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -199,6 +241,13 @@ const HomePage: React.FC = () => {
       transition={{ duration: 0.6, ease: "easeOut" }}
       className="container mx-auto px-1.5 py-6"
     >
+      {/* Login prompt component */}
+      <LoginPrompt
+        isOpen={showLoginPrompt}
+        onClose={() => setShowLoginPrompt(false)}
+        message={loginPromptMessage}
+      />
+
       {/* Header Section with gradient background */}
       <div className="mb-6 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl p-5 shadow-lg">
         <motion.div
@@ -350,70 +399,70 @@ const HomePage: React.FC = () => {
             <h2 className="text-lg font-semibold mb-3 text-gray-800 dark:text-white">
               Quick Actions
             </h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
-              {/* Dashboard Action */}
-              <Link to="/dashboard" className="block">
-                <motion.div
-                  className="p-3 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/20 rounded-lg text-center transition-colors"
-                  whileHover={{ y: -2, scale: 1.03 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <div className="w-8 h-8 md:w-10 md:h-10 bg-blue-200 dark:bg-blue-800/50 rounded-full flex items-center justify-center mx-auto mb-1 md:mb-2">
-                    <BookOpenIcon className="w-4 h-4 md:w-5 md:h-5 text-blue-600 dark:text-blue-300" />
-                  </div>
-                  <p className="text-xs md:text-sm font-medium text-blue-700 dark:text-blue-300">
-                    Dashboard
-                  </p>
-                </motion.div>
-              </Link>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+              <motion.div
+                whileHover={{ y: -5 }}
+                whileTap={{ scale: 0.98 }}
+                className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-md flex flex-col items-center text-center cursor-pointer"
+                onClick={() => {
+                  if (!handleAuthRequired("Tasks")) {
+                    navigate("/tasks");
+                  }
+                }}
+              >
+                <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center mb-2">
+                  <CheckCircleIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <h3 className="font-medium">Tasks</h3>
+              </motion.div>
 
-              {/* Task Manager Action */}
-              <Link to="/tasks" className="block">
-                <motion.div
-                  className="p-3 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/20 rounded-lg text-center transition-colors"
-                  whileHover={{ y: -2, scale: 1.03 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <div className="w-8 h-8 md:w-10 md:h-10 bg-green-200 dark:bg-green-800/50 rounded-full flex items-center justify-center mx-auto mb-1 md:mb-2">
-                    <CheckCircleIcon className="w-4 h-4 md:w-5 md:h-5 text-green-600 dark:text-green-300" />
-                  </div>
-                  <p className="text-xs md:text-sm font-medium text-green-700 dark:text-green-300">
-                    Tasks
-                  </p>
-                </motion.div>
-              </Link>
+              <motion.div
+                whileHover={{ y: -5 }}
+                whileTap={{ scale: 0.98 }}
+                className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-md flex flex-col items-center text-center cursor-pointer"
+                onClick={() => {
+                  if (!handleAuthRequired("Planner")) {
+                    navigate("/planner");
+                  }
+                }}
+              >
+                <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center mb-2">
+                  <CalendarIcon className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                </div>
+                <h3 className="font-medium">Planner</h3>
+              </motion.div>
 
-              {/* Pomodoro Timer Action */}
-              <Link to="/pomodoro" className="block">
-                <motion.div
-                  className="p-3 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/30 dark:to-red-800/20 rounded-lg text-center transition-colors"
-                  whileHover={{ y: -2, scale: 1.03 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <div className="w-8 h-8 md:w-10 md:h-10 bg-red-200 dark:bg-red-800/50 rounded-full flex items-center justify-center mx-auto mb-1 md:mb-2">
-                    <ClockIcon className="w-4 h-4 md:w-5 md:h-5 text-red-600 dark:text-red-300" />
-                  </div>
-                  <p className="text-xs md:text-sm font-medium text-red-700 dark:text-red-300">
-                    Pomodoro
-                  </p>
-                </motion.div>
-              </Link>
+              <motion.div
+                whileHover={{ y: -5 }}
+                whileTap={{ scale: 0.98 }}
+                className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-md flex flex-col items-center text-center cursor-pointer"
+                onClick={() => {
+                  if (!handleAuthRequired("Pomodoro")) {
+                    navigate("/pomodoro");
+                  }
+                }}
+              >
+                <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900 flex items-center justify-center mb-2">
+                  <ClockIcon className="h-5 w-5 text-red-600 dark:text-red-400" />
+                </div>
+                <h3 className="font-medium">Pomodoro</h3>
+              </motion.div>
 
-              {/* Study Planner Action */}
-              <Link to="/planner" className="block">
-                <motion.div
-                  className="p-3 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/20 rounded-lg text-center transition-colors"
-                  whileHover={{ y: -2, scale: 1.03 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <div className="w-8 h-8 md:w-10 md:h-10 bg-purple-200 dark:bg-purple-800/50 rounded-full flex items-center justify-center mx-auto mb-1 md:mb-2">
-                    <CalendarIcon className="w-4 h-4 md:w-5 md:h-5 text-purple-600 dark:text-purple-300" />
-                  </div>
-                  <p className="text-xs md:text-sm font-medium text-purple-700 dark:text-purple-300">
-                    Planner
-                  </p>
-                </motion.div>
-              </Link>
+              <motion.div
+                whileHover={{ y: -5 }}
+                whileTap={{ scale: 0.98 }}
+                className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-md flex flex-col items-center text-center cursor-pointer"
+                onClick={() => {
+                  if (!handleAuthRequired("Dashboard")) {
+                    navigate("/dashboard");
+                  }
+                }}
+              >
+                <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center mb-2">
+                  <ChartBarIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
+                </div>
+                <h3 className="font-medium">Stats</h3>
+              </motion.div>
             </div>
           </motion.div>
 
@@ -645,6 +694,38 @@ const HomePage: React.FC = () => {
           </motion.div>
         </div>
       </div>
+
+      {/* Call to action if not authenticated */}
+      {!isAuthenticated && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5, duration: 0.5 }}
+          className="mt-8 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl p-6 border border-indigo-100 dark:border-indigo-800"
+        >
+          <h3 className="text-xl font-semibold text-indigo-900 dark:text-indigo-200 mb-2">
+            Sign in to get the full experience
+          </h3>
+          <p className="text-indigo-700 dark:text-indigo-300 mb-4">
+            Create an account to track your progress, set goals, and become more
+            productive in your studies.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <button
+              onClick={() => navigate("/login")}
+              className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-md"
+            >
+              Sign In
+            </button>
+            <button
+              onClick={() => navigate("/signup")}
+              className="px-6 py-2 bg-white hover:bg-gray-50 text-indigo-600 border border-indigo-600 font-medium rounded-md"
+            >
+              Create Account
+            </button>
+          </div>
+        </motion.div>
+      )}
     </motion.div>
   );
 };

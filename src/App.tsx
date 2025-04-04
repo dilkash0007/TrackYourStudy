@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { MainLayout } from "./components/layout/MainLayout";
 import { HomePage } from "./pages/HomePage";
@@ -9,12 +9,27 @@ import { TaskPage } from "./pages/TaskPage";
 import { PomodoroPage } from "./pages/PomodoroPage";
 import { MotivationPage } from "./pages/MotivationPage";
 import { ProfilePage } from "./pages/ProfilePage";
+import { LoginPage } from "./pages/LoginPage";
+import { SignupPage } from "./pages/SignupPage";
 import LoadingScreen from "./components/ui/LoadingScreen";
 import { PomodoroBackgroundRunner } from "./components/pomodoro/PomodoroBackgroundRunner";
 import "./App.css";
 
+// Auth-required route component that redirects to login
+const AuthRequiredRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAuthenticated } = useUserStore();
+  const location = useLocation();
+
+  if (!isAuthenticated) {
+    // Redirect to login page but save the attempted URL
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+  }
+
+  return <>{children}</>;
+};
+
 function App() {
-  const { profile, uiPreferences } = useUserStore();
+  const { isAuthenticated } = useUserStore();
   const [isLoading, setIsLoading] = useState(true);
 
   // Simulate loading
@@ -26,17 +41,20 @@ function App() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Apply theme based on preferences
+  // Apply theme based on user preference or system default
   useEffect(() => {
-    const theme =
-      profile?.preferences?.theme || uiPreferences?.theme || "system";
+    const savedTheme = localStorage.getItem("theme") as
+      | "light"
+      | "dark"
+      | "system"
+      | null;
 
-    if (theme === "dark") {
+    if (savedTheme === "dark") {
       document.documentElement.classList.add("dark");
-    } else if (theme === "light") {
+    } else if (savedTheme === "light") {
       document.documentElement.classList.remove("dark");
     } else {
-      // System theme
+      // System theme - check prefers-color-scheme
       if (
         window.matchMedia &&
         window.matchMedia("(prefers-color-scheme: dark)").matches
@@ -48,7 +66,7 @@ function App() {
     }
 
     // Listen for changes in system preference
-    if (theme === "system" && window.matchMedia) {
+    if (savedTheme === "system" && window.matchMedia) {
       const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
       const handleChange = (e: MediaQueryListEvent) => {
@@ -65,7 +83,7 @@ function App() {
         mediaQuery.removeEventListener("change", handleChange);
       };
     }
-  }, [profile?.preferences?.theme, uiPreferences?.theme]);
+  }, []);
 
   if (isLoading) {
     return <LoadingScreen />;
@@ -74,6 +92,7 @@ function App() {
   return (
     <PomodoroBackgroundRunner>
       <Routes>
+        {/* Home is accessible to everyone */}
         <Route
           path="/"
           element={
@@ -82,52 +101,70 @@ function App() {
             </MainLayout>
           }
         />
+
+        {/* Authentication Routes */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
+
+        {/* Protected Routes */}
         <Route
           path="/dashboard"
           element={
-            <MainLayout>
-              <DashboardPage />
-            </MainLayout>
+            <AuthRequiredRoute>
+              <MainLayout>
+                <DashboardPage />
+              </MainLayout>
+            </AuthRequiredRoute>
           }
         />
         <Route
           path="/planner"
           element={
-            <MainLayout>
-              <PlannerPage />
-            </MainLayout>
+            <AuthRequiredRoute>
+              <MainLayout>
+                <PlannerPage />
+              </MainLayout>
+            </AuthRequiredRoute>
           }
         />
         <Route
           path="/tasks"
           element={
-            <MainLayout>
-              <TaskPage />
-            </MainLayout>
+            <AuthRequiredRoute>
+              <MainLayout>
+                <TaskPage />
+              </MainLayout>
+            </AuthRequiredRoute>
           }
         />
         <Route
           path="/pomodoro"
           element={
-            <MainLayout>
-              <PomodoroPage />
-            </MainLayout>
+            <AuthRequiredRoute>
+              <MainLayout>
+                <PomodoroPage />
+              </MainLayout>
+            </AuthRequiredRoute>
           }
         />
         <Route
           path="/motivation"
           element={
-            <MainLayout>
-              <MotivationPage />
-            </MainLayout>
+            <AuthRequiredRoute>
+              <MainLayout>
+                <MotivationPage />
+              </MainLayout>
+            </AuthRequiredRoute>
           }
         />
         <Route
           path="/profile"
           element={
-            <MainLayout>
-              <ProfilePage />
-            </MainLayout>
+            <AuthRequiredRoute>
+              <MainLayout>
+                <ProfilePage />
+              </MainLayout>
+            </AuthRequiredRoute>
           }
         />
         <Route path="*" element={<Navigate to="/" replace />} />

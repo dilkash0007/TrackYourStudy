@@ -14,6 +14,8 @@ import {
   SunIcon,
   MoonIcon,
   ComputerDesktopIcon,
+  ArrowRightOnRectangleIcon,
+  UserPlusIcon,
 } from "@heroicons/react/24/outline";
 import { HeaderTimer } from "../pomodoro/HeaderTimer";
 import { FloatingTimer } from "../pomodoro/FloatingTimer";
@@ -24,28 +26,41 @@ interface NavLinkProps {
   label: string;
   isActive: boolean;
   onClick?: () => void;
+  requiresAuth?: boolean;
 }
 
 export const MainLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { profile, updatePreferences } = useUserStore();
+  const { name, email, logout, isAuthenticated } = useUserStore();
 
   // Close mobile menu when route changes
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
 
-  const theme = profile?.preferences?.theme || "system";
+  // Use system theme as default
+  const [theme, setTheme] = useState<"light" | "dark" | "system">("system");
+
+  // Apply theme effect
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme") as
+      | "light"
+      | "dark"
+      | "system"
+      | null;
+    if (savedTheme) {
+      setTheme(savedTheme);
+    }
+  }, []);
 
   const toggleTheme = () => {
-    if (!profile?.preferences) return;
-
     const newTheme =
       theme === "light" ? "dark" : theme === "dark" ? "system" : "light";
 
-    updatePreferences({ theme: newTheme });
+    setTheme(newTheme);
+    localStorage.setItem("theme", newTheme);
 
     // Update document theme
     if (newTheme === "dark") {
@@ -62,22 +77,42 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const NavLink = ({ to, icon, label, isActive, onClick }: NavLinkProps) => (
-    <button
-      onClick={() => {
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
+
+  const NavLink = ({
+    to,
+    icon,
+    label,
+    isActive,
+    onClick,
+    requiresAuth = true,
+  }: NavLinkProps) => {
+    const handleClick = () => {
+      if (requiresAuth && !isAuthenticated) {
+        navigate("/login");
+      } else {
         if (onClick) onClick();
         navigate(to);
-      }}
-      className={`flex items-center px-4 py-3 w-full rounded-lg ${
-        isActive
-          ? "bg-indigo-50 text-indigo-600 font-medium dark:bg-gray-800 dark:text-indigo-400"
-          : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
-      }`}
-    >
-      <div className="w-5 h-5 mr-3">{icon}</div>
-      {label}
-    </button>
-  );
+      }
+    };
+
+    return (
+      <button
+        onClick={handleClick}
+        className={`flex items-center px-4 py-3 w-full rounded-lg ${
+          isActive
+            ? "bg-indigo-50 text-indigo-600 font-medium dark:bg-gray-800 dark:text-indigo-400"
+            : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+        }`}
+      >
+        <div className="w-5 h-5 mr-3">{icon}</div>
+        {label}
+      </button>
+    );
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
@@ -131,67 +166,97 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
                 icon={<HomeIcon />}
                 label="Home"
                 isActive={location.pathname === "/"}
+                requiresAuth={false}
               />
-              <NavLink
-                to="/dashboard"
-                icon={<BookOpenIcon />}
-                label="Dashboard"
-                isActive={location.pathname === "/dashboard"}
-              />
-              <NavLink
-                to="/planner"
-                icon={<CalendarIcon />}
-                label="Planner"
-                isActive={location.pathname.startsWith("/planner")}
-              />
-              <NavLink
-                to="/tasks"
-                icon={<ListBulletIcon />}
-                label="Tasks"
-                isActive={location.pathname.startsWith("/tasks")}
-              />
-              <NavLink
-                to="/pomodoro"
-                icon={<ClockIcon />}
-                label="Pomodoro"
-                isActive={location.pathname === "/pomodoro"}
-              />
-              <NavLink
-                to="/motivation"
-                icon={<BoltIcon />}
-                label="Motivation"
-                isActive={location.pathname === "/motivation"}
-              />
-              <NavLink
-                to="/profile"
-                icon={<UserIcon />}
-                label="Profile"
-                isActive={location.pathname === "/profile"}
-              />
+
+              {isAuthenticated ? (
+                <>
+                  <NavLink
+                    to="/dashboard"
+                    icon={<BookOpenIcon />}
+                    label="Dashboard"
+                    isActive={location.pathname === "/dashboard"}
+                  />
+                  <NavLink
+                    to="/planner"
+                    icon={<CalendarIcon />}
+                    label="Planner"
+                    isActive={location.pathname.startsWith("/planner")}
+                  />
+                  <NavLink
+                    to="/tasks"
+                    icon={<ListBulletIcon />}
+                    label="Tasks"
+                    isActive={location.pathname.startsWith("/tasks")}
+                  />
+                  <NavLink
+                    to="/pomodoro"
+                    icon={<ClockIcon />}
+                    label="Pomodoro"
+                    isActive={location.pathname === "/pomodoro"}
+                  />
+                  <NavLink
+                    to="/motivation"
+                    icon={<BoltIcon />}
+                    label="Motivation"
+                    isActive={location.pathname === "/motivation"}
+                  />
+                  <NavLink
+                    to="/profile"
+                    icon={<UserIcon />}
+                    label="Profile"
+                    isActive={location.pathname === "/profile"}
+                  />
+                </>
+              ) : (
+                <>
+                  <NavLink
+                    to="/login"
+                    icon={<UserIcon />}
+                    label="Login"
+                    isActive={location.pathname === "/login"}
+                    requiresAuth={false}
+                  />
+                  <NavLink
+                    to="/signup"
+                    icon={<UserPlusIcon />}
+                    label="Create Account"
+                    isActive={location.pathname === "/signup"}
+                    requiresAuth={false}
+                  />
+                </>
+              )}
+
               <hr className="my-3 border-gray-200 dark:border-gray-700" />
-              {profile ? (
-                <div className="px-4 py-2">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center">
-                      <UserIcon className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-800 dark:text-white">
-                        {profile.username}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {profile.email}
-                      </p>
+              {isAuthenticated ? (
+                <>
+                  <div className="px-4 py-2">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center">
+                        <UserIcon className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-800 dark:text-white">
+                          {name}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {email}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center px-4 py-3 w-full rounded-lg text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                  >
+                    <ArrowRightOnRectangleIcon className="w-5 h-5 mr-3" />
+                    Logout
+                  </button>
+                </>
               ) : (
-                <button
-                  onClick={() => navigate("/login")}
-                  className="px-4 py-2 w-full text-left text-indigo-600 dark:text-indigo-400 font-medium"
-                >
-                  Sign In
-                </button>
+                <div className="px-4 py-2 text-center text-sm text-gray-600 dark:text-gray-400">
+                  Sign in to access all features
+                </div>
               )}
             </nav>
           </div>
@@ -218,43 +283,78 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
                 icon={<HomeIcon />}
                 label="Home"
                 isActive={location.pathname === "/"}
+                requiresAuth={false}
               />
-              <NavLink
-                to="/dashboard"
-                icon={<BookOpenIcon />}
-                label="Dashboard"
-                isActive={location.pathname === "/dashboard"}
-              />
-              <NavLink
-                to="/planner"
-                icon={<CalendarIcon />}
-                label="Planner"
-                isActive={location.pathname.startsWith("/planner")}
-              />
-              <NavLink
-                to="/tasks"
-                icon={<ListBulletIcon />}
-                label="Tasks"
-                isActive={location.pathname.startsWith("/tasks")}
-              />
-              <NavLink
-                to="/pomodoro"
-                icon={<ClockIcon />}
-                label="Pomodoro"
-                isActive={location.pathname === "/pomodoro"}
-              />
-              <NavLink
-                to="/motivation"
-                icon={<BoltIcon />}
-                label="Motivation"
-                isActive={location.pathname === "/motivation"}
-              />
-              <NavLink
-                to="/profile"
-                icon={<UserIcon />}
-                label="Profile"
-                isActive={location.pathname === "/profile"}
-              />
+
+              {isAuthenticated ? (
+                <>
+                  <NavLink
+                    to="/dashboard"
+                    icon={<BookOpenIcon />}
+                    label="Dashboard"
+                    isActive={location.pathname === "/dashboard"}
+                  />
+                  <NavLink
+                    to="/planner"
+                    icon={<CalendarIcon />}
+                    label="Planner"
+                    isActive={location.pathname.startsWith("/planner")}
+                  />
+                  <NavLink
+                    to="/tasks"
+                    icon={<ListBulletIcon />}
+                    label="Tasks"
+                    isActive={location.pathname.startsWith("/tasks")}
+                  />
+                  <NavLink
+                    to="/pomodoro"
+                    icon={<ClockIcon />}
+                    label="Pomodoro"
+                    isActive={location.pathname === "/pomodoro"}
+                  />
+                  <NavLink
+                    to="/motivation"
+                    icon={<BoltIcon />}
+                    label="Motivation"
+                    isActive={location.pathname === "/motivation"}
+                  />
+                  <NavLink
+                    to="/profile"
+                    icon={<UserIcon />}
+                    label="Profile"
+                    isActive={location.pathname === "/profile"}
+                  />
+                </>
+              ) : (
+                <>
+                  <NavLink
+                    to="/login"
+                    icon={<UserIcon />}
+                    label="Login"
+                    isActive={location.pathname === "/login"}
+                    requiresAuth={false}
+                  />
+                  <NavLink
+                    to="/signup"
+                    icon={<UserPlusIcon />}
+                    label="Create Account"
+                    isActive={location.pathname === "/signup"}
+                    requiresAuth={false}
+                  />
+                  <div className="p-4 mt-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg">
+                    <p className="text-sm text-indigo-700 dark:text-indigo-300 mb-3">
+                      Create an account to unlock all features and track your
+                      study progress.
+                    </p>
+                    <button
+                      onClick={() => navigate("/signup")}
+                      className="w-full py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-md"
+                    >
+                      Sign up now
+                    </button>
+                  </div>
+                </>
+              )}
             </nav>
           </div>
           <div className="p-4 border-t border-gray-200 dark:border-gray-700">
@@ -271,17 +371,17 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
                   <ComputerDesktopIcon className="h-5 w-5 text-gray-500 dark:text-gray-300" />
                 )}
               </button>
-              {profile ? (
+              {isAuthenticated ? (
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center">
                     <UserIcon className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                   </div>
                   <div>
                     <p className="font-medium text-gray-800 dark:text-white">
-                      {profile.username}
+                      {name}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {profile.email}
+                      {email}
                     </p>
                   </div>
                 </div>
@@ -294,12 +394,21 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
                 </button>
               )}
             </div>
+            {isAuthenticated && (
+              <button
+                onClick={handleLogout}
+                className="mt-4 flex items-center px-4 py-2 w-full rounded-lg text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+              >
+                <ArrowRightOnRectangleIcon className="w-5 h-5 mr-3" />
+                Logout
+              </button>
+            )}
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="lg:pl-64 flex flex-col flex-1">
+      <div className="lg:pl-64">
         <main className="flex-1 pt-16 lg:pt-0 pb-6">
           <div className="px-1.5 sm:px-6 lg:px-8 max-w-7xl mx-auto">
             {children}
@@ -323,50 +432,80 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
           <HomeIcon className="w-6 h-6" />
           <span className="text-xs mt-1">Home</span>
         </Link>
-        <Link
-          to="/dashboard"
-          className={`flex flex-col items-center px-3 py-2 ${
-            location.pathname === "/dashboard"
-              ? "text-indigo-600 dark:text-indigo-400"
-              : "text-gray-600 dark:text-gray-300"
-          }`}
-        >
-          <BookOpenIcon className="w-6 h-6" />
-          <span className="text-xs mt-1">Dashboard</span>
-        </Link>
-        <Link
-          to="/tasks"
-          className={`flex flex-col items-center px-3 py-2 ${
-            location.pathname.startsWith("/tasks")
-              ? "text-indigo-600 dark:text-indigo-400"
-              : "text-gray-600 dark:text-gray-300"
-          }`}
-        >
-          <ListBulletIcon className="w-6 h-6" />
-          <span className="text-xs mt-1">Tasks</span>
-        </Link>
-        <Link
-          to="/pomodoro"
-          className={`flex flex-col items-center px-3 py-2 ${
-            location.pathname === "/pomodoro"
-              ? "text-indigo-600 dark:text-indigo-400"
-              : "text-gray-600 dark:text-gray-300"
-          }`}
-        >
-          <ClockIcon className="w-6 h-6" />
-          <span className="text-xs mt-1">Pomodoro</span>
-        </Link>
-        <Link
-          to="/profile"
-          className={`flex flex-col items-center px-3 py-2 ${
-            location.pathname === "/profile"
-              ? "text-indigo-600 dark:text-indigo-400"
-              : "text-gray-600 dark:text-gray-300"
-          }`}
-        >
-          <UserIcon className="w-6 h-6" />
-          <span className="text-xs mt-1">Profile</span>
-        </Link>
+
+        {isAuthenticated ? (
+          <>
+            <Link
+              to="/dashboard"
+              className={`flex flex-col items-center px-3 py-2 ${
+                location.pathname === "/dashboard"
+                  ? "text-indigo-600 dark:text-indigo-400"
+                  : "text-gray-600 dark:text-gray-300"
+              }`}
+            >
+              <BookOpenIcon className="w-6 h-6" />
+              <span className="text-xs mt-1">Dashboard</span>
+            </Link>
+            <Link
+              to="/tasks"
+              className={`flex flex-col items-center px-3 py-2 ${
+                location.pathname.startsWith("/tasks")
+                  ? "text-indigo-600 dark:text-indigo-400"
+                  : "text-gray-600 dark:text-gray-300"
+              }`}
+            >
+              <ListBulletIcon className="w-6 h-6" />
+              <span className="text-xs mt-1">Tasks</span>
+            </Link>
+            <Link
+              to="/pomodoro"
+              className={`flex flex-col items-center px-3 py-2 ${
+                location.pathname === "/pomodoro"
+                  ? "text-indigo-600 dark:text-indigo-400"
+                  : "text-gray-600 dark:text-gray-300"
+              }`}
+            >
+              <ClockIcon className="w-6 h-6" />
+              <span className="text-xs mt-1">Pomodoro</span>
+            </Link>
+            <Link
+              to="/profile"
+              className={`flex flex-col items-center px-3 py-2 ${
+                location.pathname === "/profile"
+                  ? "text-indigo-600 dark:text-indigo-400"
+                  : "text-gray-600 dark:text-gray-300"
+              }`}
+            >
+              <UserIcon className="w-6 h-6" />
+              <span className="text-xs mt-1">Profile</span>
+            </Link>
+          </>
+        ) : (
+          <>
+            <Link
+              to="/login"
+              className={`flex flex-col items-center px-3 py-2 ${
+                location.pathname === "/login"
+                  ? "text-indigo-600 dark:text-indigo-400"
+                  : "text-gray-600 dark:text-gray-300"
+              }`}
+            >
+              <UserIcon className="w-6 h-6" />
+              <span className="text-xs mt-1">Login</span>
+            </Link>
+            <Link
+              to="/signup"
+              className={`flex flex-col items-center px-3 py-2 ${
+                location.pathname === "/signup"
+                  ? "text-indigo-600 dark:text-indigo-400"
+                  : "text-gray-600 dark:text-gray-300"
+              }`}
+            >
+              <UserPlusIcon className="w-6 h-6" />
+              <span className="text-xs mt-1">Sign Up</span>
+            </Link>
+          </>
+        )}
       </nav>
 
       {/* Bottom padding for mobile to avoid content being hidden by bottom nav */}
