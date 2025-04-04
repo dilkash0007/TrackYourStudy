@@ -283,28 +283,76 @@ export const useUserStore = create<UserState>()(
       phoneNumber: "",
       location: "",
       setUserProfile: (name: string, email: string) => set({ name, email }),
-      setDetailedProfile: (profileData) =>
-        set((state) => ({ ...state, ...profileData })),
+      setDetailedProfile: (profileData) => {
+        // Extract all possible fields to ensure they're properly typed
+        const {
+          name,
+          email,
+          bio,
+          educationLevel,
+          institution,
+          studyField,
+          birthday,
+          phoneNumber,
+          location,
+        } = profileData;
+
+        // Create an update object that only includes defined values
+        const updateObj: Partial<UserState> = {};
+
+        // Only add properties that are defined
+        if (name !== undefined) updateObj.name = name;
+        if (email !== undefined) updateObj.email = email;
+        if (bio !== undefined) updateObj.bio = bio;
+        if (educationLevel !== undefined)
+          updateObj.educationLevel = educationLevel;
+        if (institution !== undefined) updateObj.institution = institution;
+        if (studyField !== undefined) updateObj.studyField = studyField;
+        if (birthday !== undefined) updateObj.birthday = birthday;
+        if (phoneNumber !== undefined) updateObj.phoneNumber = phoneNumber;
+        if (location !== undefined) updateObj.location = location;
+
+        // Update the state with the filtered object
+        set((state) => ({ ...state, ...updateObj }));
+      },
       setAvatar: (avatar: string) => set({ avatar }),
       randomizeAvatar: () => set({ avatar: getRandomAvatar() }),
       login: (email: string, password: string) => {
         const state = get();
+
         // In a real app, this would validate against a backend
         if (state.email === email && state.password === password) {
+          // Just set authentication status, preserve other user details
           set({ isAuthenticated: true });
           return true;
         }
+
         // If this is the first login and no account exists yet
         if (!state.email && !state.password) {
-          set({ email, password, isAuthenticated: true });
+          // Create a basic account with the provided credentials
+          const username = email.split("@")[0]; // Simple way to get a default username
+          set({
+            name: username, // Use email username part as default name
+            email,
+            password,
+            isAuthenticated: true,
+          });
           return true;
         }
+
         return false;
       },
       signup: (name: string, email: string, password: string) => {
-        set({ name, email, password, isAuthenticated: true });
+        // Create a full account with the provided credentials
+        set({
+          name,
+          email,
+          password,
+          isAuthenticated: true,
+        });
       },
       logout: () => {
+        // Only set authentication status to false, preserve user details
         set({ isAuthenticated: false });
       },
     }),

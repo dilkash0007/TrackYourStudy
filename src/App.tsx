@@ -29,8 +29,13 @@ const AuthRequiredRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 function App() {
-  const { isAuthenticated } = useUserStore();
+  const { isAuthenticated, name, email } = useUserStore();
   const [isLoading, setIsLoading] = useState(true);
+
+  // Log current user info for debugging
+  useEffect(() => {
+    console.log("Current user state:", { isAuthenticated, name, email });
+  }, [isAuthenticated, name, email]);
 
   // Simulate loading
   useEffect(() => {

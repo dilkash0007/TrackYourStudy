@@ -5,7 +5,7 @@ import { useUserStore } from "../store/userStore";
 
 export const LoginPage = () => {
   const navigate = useNavigate();
-  const { login } = useUserStore();
+  const { login, setUserProfile } = useUserStore();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -35,11 +35,19 @@ export const LoginPage = () => {
       // Simulate network request
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
+      // First update the user profile with the email
+      // This helps ensure we have the email set even if we're creating a new account
+      const username = email.split("@")[0]; // Simple way to get a default username
+      setUserProfile(username, email);
+
       // Check login credentials
       const success = login(email, password);
 
       if (success) {
-        navigate("/");
+        // Add a small delay to ensure state updates are complete
+        setTimeout(() => {
+          navigate("/");
+        }, 300);
       } else {
         setError("Invalid email or password");
       }

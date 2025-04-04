@@ -5,7 +5,7 @@ import { useUserStore } from "../store/userStore";
 
 export const SignupPage = () => {
   const navigate = useNavigate();
-  const { signup, setDetailedProfile } = useUserStore();
+  const { signup, setDetailedProfile, setUserProfile } = useUserStore();
 
   // Basic account information
   const [name, setName] = useState("");
@@ -70,11 +70,16 @@ export const SignupPage = () => {
       // Simulate network request
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      // Create the account
+      // First ensure we set the basic profile
+      setUserProfile(name, email);
+
+      // Then create the account with authentication
       signup(name, email, password);
 
-      // Save additional user information
-      setDetailedProfile({
+      // Save all user information in one go to ensure everything is updated
+      const userDetails = {
+        name, // Include name even though it's set in signup
+        email, // Include email even though it's set in signup
         bio,
         educationLevel,
         institution,
@@ -82,10 +87,16 @@ export const SignupPage = () => {
         birthday,
         phoneNumber,
         location,
-      });
+      };
 
-      // Redirect to home page
-      navigate("/");
+      // Apply all user details
+      setDetailedProfile(userDetails);
+
+      // Add a small delay to ensure state updates are complete
+      setTimeout(() => {
+        // Redirect to home page
+        navigate("/");
+      }, 300);
     } catch (error) {
       setError("An error occurred. Please try again.");
     } finally {
