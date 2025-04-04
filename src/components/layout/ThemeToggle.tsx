@@ -7,21 +7,33 @@ import {
 import { useUserStore } from "../../store/userStore";
 
 export const ThemeToggle = () => {
-  const { uiPreferences, updateUIPreferences } = useUserStore();
-  const [theme, setTheme] = useState(uiPreferences.theme);
+  // Use a local theme state since theme is not in the user store
+  const [theme, setTheme] = useState(() => {
+    // Try to get the saved theme from localStorage
+    const savedTheme = localStorage.getItem("theme") as
+      | "light"
+      | "dark"
+      | "system"
+      | null;
+    return savedTheme || "system";
+  });
 
   const toggleTheme = () => {
     const nextTheme =
       theme === "light" ? "dark" : theme === "dark" ? "system" : "light";
     setTheme(nextTheme);
-    updateUIPreferences({ theme: nextTheme });
+
+    // Save the theme to localStorage
+    localStorage.setItem("theme", nextTheme);
+
+    // Apply the theme directly
+    applyTheme(nextTheme);
   };
 
-  useEffect(() => {
-    // Update the document class when theme changes
+  const applyTheme = (themeValue: string) => {
     const root = window.document.documentElement;
 
-    if (theme === "system") {
+    if (themeValue === "system") {
       const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
         .matches
         ? "dark"
@@ -30,14 +42,22 @@ export const ThemeToggle = () => {
       root.classList.add(systemTheme);
     } else {
       root.classList.remove("light", "dark");
-      root.classList.add(theme);
+      root.classList.add(themeValue);
+    }
+  };
+
+  // Apply theme on initial load
+  useEffect(() => {
+    applyTheme(theme);
+
+    // Listen for system theme changes if using system theme
+    if (theme === "system") {
+      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+      const handleChange = () => applyTheme("system");
+      mediaQuery.addEventListener("change", handleChange);
+      return () => mediaQuery.removeEventListener("change", handleChange);
     }
   }, [theme]);
-
-  // Update component if store changes
-  useEffect(() => {
-    setTheme(uiPreferences.theme);
-  }, [uiPreferences.theme]);
 
   return (
     <button
