@@ -106,82 +106,10 @@ export interface MotivationStore {
 }
 
 // Sample quotes for initial state
-const sampleQuotes: Quote[] = [
-  {
-    id: "1",
-    text: "The secret of getting ahead is getting started.",
-    author: "Mark Twain",
-    isFavorite: false,
-  },
-  {
-    id: "2",
-    text: "Don't watch the clock; do what it does. Keep going.",
-    author: "Sam Levenson",
-    isFavorite: false,
-  },
-  {
-    id: "3",
-    text: "Success is not final, failure is not fatal: It is the courage to continue that counts.",
-    author: "Winston Churchill",
-    isFavorite: false,
-  },
-  {
-    id: "4",
-    text: "Learning is not attained by chance, it must be sought for with ardor and attended to with diligence.",
-    author: "Abigail Adams",
-    isFavorite: false,
-  },
-  {
-    id: "5",
-    text: "The more that you read, the more things you will know. The more that you learn, the more places you'll go.",
-    author: "Dr. Seuss",
-    isFavorite: false,
-  },
-];
+const sampleQuotes: Quote[] = [];
 
 // Sample achievements for initial state
-const sampleAchievements: Achievement[] = [
-  {
-    id: "1",
-    title: "First Task Complete",
-    description: "Complete your first task",
-    icon: "trophy",
-    unlockedAt: null,
-    progress: 0,
-  },
-  {
-    id: "2",
-    title: "Study Marathon",
-    description: "Complete 5 Pomodoro sessions in a day",
-    icon: "fire",
-    unlockedAt: null,
-    progress: 0,
-  },
-  {
-    id: "3",
-    title: "Consistency King",
-    description: "Maintain a 7-day study streak",
-    icon: "crown",
-    unlockedAt: null,
-    progress: 0,
-  },
-  {
-    id: "4",
-    title: "Task Master",
-    description: "Complete 50 tasks",
-    icon: "check",
-    unlockedAt: null,
-    progress: 0,
-  },
-  {
-    id: "5",
-    title: "Early Bird",
-    description: "Start studying before 8 AM for 5 days",
-    icon: "sun",
-    unlockedAt: null,
-    progress: 0,
-  },
-];
+const sampleAchievements: Achievement[] = [];
 
 // Sample badges for initial state
 const sampleBadges: Badge[] = [
@@ -240,66 +168,10 @@ const samplePlaylists: MusicPlaylist[] = [
 ];
 
 // Sample rewards for initial state
-const sampleRewards: Reward[] = [
-  {
-    id: "1",
-    name: "Dark Theme",
-    description: "Unlock the dark theme for your app",
-    imageUrl: "/reward-theme.jpg",
-    unlockRequirement: "Complete 10 tasks",
-    unlockedAt: null,
-  },
-  {
-    id: "2",
-    name: "Custom Backgrounds",
-    description: "Set custom backgrounds for your app",
-    imageUrl: "/reward-backgrounds.jpg",
-    unlockRequirement: "Reach a 14-day streak",
-    unlockedAt: null,
-  },
-  {
-    id: "3",
-    name: "Premium Quotes",
-    description: "Unlock premium motivational quotes",
-    imageUrl: "/reward-quotes.jpg",
-    unlockRequirement: "Complete 30 Pomodoro sessions",
-    unlockedAt: null,
-  },
-];
+const sampleRewards: Reward[] = [];
 
 // Sample goals for initial state
-const sampleGoals: Goal[] = [
-  {
-    id: "1",
-    title: "Study Mathematics",
-    targetValue: 20,
-    currentValue: 5,
-    unit: "hours",
-    startDate: new Date().toISOString(),
-    endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
-    completed: false,
-  },
-  {
-    id: "2",
-    title: "Complete Programming Course",
-    targetValue: 12,
-    currentValue: 3,
-    unit: "chapters",
-    startDate: new Date().toISOString(),
-    endDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(), // 60 days from now
-    completed: false,
-  },
-  {
-    id: "3",
-    title: "Practice Language Skills",
-    targetValue: 30,
-    currentValue: 8,
-    unit: "sessions",
-    startDate: new Date().toISOString(),
-    endDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString(), // 45 days from now
-    completed: false,
-  },
-];
+const sampleGoals: Goal[] = [];
 
 // Collection of local quotes to use instead of the API
 const localQuotes: Quote[] = [
@@ -400,24 +272,23 @@ export const useMotivationStore = create<MotivationStore>()(
   persist(
     (set, get) => ({
       // Initial states
-      currentQuote:
-        sampleQuotes[Math.floor(Math.random() * sampleQuotes.length)],
+      currentQuote: null,
       savedQuotes: [],
-      achievements: sampleAchievements,
+      achievements: [],
       currentStreak: 1, // Start with streak of 1 for new users
       longestStreak: 1,
       lastActiveDate: new Date().toISOString().split("T")[0], // Set today as last active date
       badges: sampleBadges,
-      goals: sampleGoals, // Initialize with sample goals
+      goals: [], // Initialize with empty goals
       playlists: samplePlaylists,
-      rewards: sampleRewards,
+      rewards: [],
       notifications: true,
       leaderboardPosition: 42, // Mock data
       theme: "system",
 
       // Quote functions
       fetchNewQuote: () => {
-        const quotes = sampleQuotes;
+        const quotes = localQuotes;
         const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
         set({ currentQuote: randomQuote });
       },

@@ -103,29 +103,7 @@ interface DashboardStore {
 }
 
 // Helper functions
-const createDefaultStudySessions = (): StudySession[] => [
-  {
-    id: uuidv4(),
-    date: new Date(Date.now() - 86400000).toISOString(), // yesterday
-    duration: 120, // 2 hours
-    subject: "Mathematics",
-    completed: true,
-  },
-  {
-    id: uuidv4(),
-    date: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
-    duration: 90, // 1.5 hours
-    subject: "Physics",
-    completed: true,
-  },
-  {
-    id: uuidv4(),
-    date: new Date(Date.now() - 259200000).toISOString(), // 3 days ago
-    duration: 60, // 1 hour
-    subject: "Computer Science",
-    completed: true,
-  },
-];
+const createDefaultStudySessions = (): StudySession[] => [];
 
 const createDefaultStreakData = (): StreakData => ({
   currentStreak: 3,
@@ -228,46 +206,25 @@ const createDefaultLeaderboard = (): LeaderboardEntry[] => [
 ];
 
 const createDefaultDashboardStats = (): DashboardStats => ({
-  totalStudyHours: 45,
-  weeklyStudyHours: 12,
-  monthlyStudyHours: 35,
-  totalTasksCompleted: 67,
-  weeklyTasksCompleted: 8,
-  monthlyTasksCompleted: 24,
-  totalPomodoroSessions: 54,
-  weeklyPomodoroSessions: 15,
-  monthlyPomodoroSessions: 42,
-  studySubjects: {
-    Mathematics: 15,
-    Physics: 10,
-    "Computer Science": 8,
-    Chemistry: 5,
-    Biology: 3,
-    Languages: 4,
-  },
-  productiveHours: {
-    "9": 75,
-    "10": 85,
-    "11": 90,
-    "12": 65,
-    "13": 60,
-    "14": 70,
-    "15": 80,
-    "16": 85,
-    "17": 75,
-    "18": 65,
-    "19": 60,
-    "20": 55,
-    "21": 50,
-  },
+  totalStudyHours: 0,
+  weeklyStudyHours: 0,
+  monthlyStudyHours: 0,
+  totalTasksCompleted: 0,
+  weeklyTasksCompleted: 0,
+  monthlyTasksCompleted: 0,
+  totalPomodoroSessions: 0,
+  weeklyPomodoroSessions: 0,
+  monthlyPomodoroSessions: 0,
+  studySubjects: {},
+  productiveHours: {},
   weekdayProductivity: {
-    Monday: 75,
-    Tuesday: 85,
-    Wednesday: 80,
-    Thursday: 75,
-    Friday: 65,
-    Saturday: 60,
-    Sunday: 55,
+    Monday: 0,
+    Tuesday: 0,
+    Wednesday: 0,
+    Thursday: 0,
+    Friday: 0,
+    Saturday: 0,
+    Sunday: 0,
   },
 });
 

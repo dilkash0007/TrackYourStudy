@@ -107,59 +107,6 @@ const TaskItem = ({
   );
 };
 
-// Add this function at the top of the file, after your imports
-const createDemoTasks = () => {
-  const addTask = useTaskStore.getState().addTask;
-
-  // Demo task 1
-  addTask({
-    title: "Complete Math Assignment",
-    description: "Finish chapters 5-7 exercises for Calculus",
-    subject: "Mathematics",
-    priority: "High", // First letter capitalized to match TaskPriority type
-    dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days from now
-    status: "Pending",
-    category: "Homework",
-    notes: "Ask professor about question 7",
-    pomodoroSessions: 2,
-    estimatedTime: 90,
-    actualTime: 45,
-    tags: ["math", "calculus", "urgent"],
-  });
-
-  // Demo task 2
-  addTask({
-    title: "Prepare Physics Lab Report",
-    description: "Write up results from last week's experiment on motion",
-    subject: "Physics",
-    priority: "Medium", // First letter capitalized to match TaskPriority type
-    dueDate: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days from now
-    status: "In Progress",
-    category: "Project",
-    notes: "Include graphs and error analysis",
-    pomodoroSessions: 1,
-    estimatedTime: 120,
-    actualTime: 30,
-    tags: ["physics", "lab", "report"],
-  });
-
-  // Demo task 3
-  addTask({
-    title: "Review History Notes",
-    description: "Prepare for upcoming test on World War II",
-    subject: "History",
-    priority: "Medium", // First letter capitalized to match TaskPriority type
-    dueDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day from now
-    status: "Pending",
-    category: "Exam",
-    notes: "Focus on European theater dates",
-    pomodoroSessions: 0,
-    estimatedTime: 60,
-    actualTime: 0,
-    tags: ["history", "exam", "review"],
-  });
-};
-
 // Add a priority mapping helper for form values
 const priorityMapping: Record<string, string> = {
   low: "Low",
@@ -251,48 +198,6 @@ export const TaskPage = () => {
     // Log whenever filteredTasks changes
     console.log("Filtered tasks updated:", filteredTasks);
   }, [filteredTasks]);
-
-  // Add this useEffect to check if we have tasks and create demo tasks if needed
-  useEffect(() => {
-    if (allTasks.length === 0) {
-      console.log("Creating demo tasks");
-      createDemoTasks();
-      // Force a reapplication of filters after creating demo tasks
-      setTimeout(() => {
-        applyFilters();
-      }, 100);
-    }
-  }, [allTasks.length, applyFilters]);
-
-  // Add a new useEffect to handle tab changes
-  useEffect(() => {
-    console.log("Active tab changed to:", activeTab);
-    // Convert activeTab to status for filtering
-    const statusFilter = tabToStatusMap[activeTab];
-
-    // Get the full store API
-    const setActiveFilter = useTaskStore.getState().setActiveFilter;
-
-    console.log("Setting status filter to:", statusFilter);
-
-    // If a specific status is selected, apply it
-    if (statusFilter) {
-      // Apply the filter with the exact case matching the Task type
-      setActiveFilter({ status: statusFilter as any });
-    } else {
-      // If "all" is selected, reset the status filter
-      setActiveFilter({ status: "All" });
-    }
-
-    // Apply the filters
-    setTimeout(() => {
-      applyFilters();
-      console.log(
-        "Filters applied after tab change, tasks:",
-        useTaskStore.getState().filteredTasks.length
-      );
-    }, 50);
-  }, [activeTab, applyFilters]);
 
   const handleEditTask = (task: Task) => {
     setTaskToEdit(task);

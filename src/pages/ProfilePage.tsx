@@ -35,6 +35,7 @@ import {
   getRandomAvatar,
   getAvatarPath,
 } from "../utils/avatarUtils";
+import { resetAllStorage } from "../utils/resetStorage";
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
@@ -114,9 +115,9 @@ export const ProfilePage = () => {
       case 5:
         return <SecuritySection />;
       case 6:
-        return <DataSection />;
+        return <DataSection onResetStorage={resetAllStorage} />;
       default:
-        return <ProfileSection />;
+        return <div>Tab content not available</div>;
     }
   };
 
