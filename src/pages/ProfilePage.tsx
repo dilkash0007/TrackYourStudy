@@ -38,10 +38,6 @@ import {
 import { resetAllStorage } from "../utils/resetStorage";
 import { Navigate } from "react-router-dom";
 import { useTheme } from "../hooks/useTheme";
-import { useNotification } from "../hooks/useNotification";
-import NotificationsButton from "../components/common/NotificationsButton";
-import ThemeSelector from "../components/common/ThemeSelector";
-import { SettingsSection } from "../components/profile/SettingsSection";
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
@@ -58,9 +54,10 @@ export const ProfilePage = () => {
     institution,
     studyField,
     bio,
+    setAvatar,
+    randomizeAvatar,
   } = useUserStore();
-  const { showNotification } = useNotification();
-  const { theme, toggleTheme } = useTheme();
+  const { isDark } = useTheme();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [showAvatarSelector, setShowAvatarSelector] = useState(false);
@@ -266,8 +263,8 @@ export const ProfilePage = () => {
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.7 }}
                 >
-                  Student passionate about learning and tracking study progress
-                  with TrackYouStudy
+                  {bio ||
+                    "Student passionate about learning and tracking study progress with TrackYouStudy"}
                 </motion.div>
               </div>
 
