@@ -77,6 +77,7 @@ export interface PomodoroStore {
   timeRemaining: number;
   completedSessions: PomodoroSession[];
   completedSessionsCount: number;
+  selectedTaskId?: string;
 
   // Settings
   settings: PomodoroSettings;
@@ -90,6 +91,7 @@ export interface PomodoroStore {
   resetSession: () => void;
   updateTimeRemaining: (seconds: number) => void;
   updateSettings: (settings: Partial<PomodoroSettings>) => void;
+  selectTask: (taskId?: string) => void;
 
   // Analytics methods
   getCompletedSessionsByDate: (date: Date) => PomodoroSession[];
@@ -178,6 +180,7 @@ export const usePomodoroStore = create<PomodoroStore>()(
       timeRemaining: defaultSettings.focusDuration,
       completedSessions: [],
       completedSessionsCount: 0,
+      selectedTaskId: undefined,
       settings: defaultSettings,
 
       // Session management methods
@@ -775,6 +778,10 @@ export const usePomodoroStore = create<PomodoroStore>()(
           weeklyFocusTime,
           focusScore,
         };
+      },
+
+      selectTask: (taskId?: string) => {
+        set({ selectedTaskId: taskId });
       },
     }),
     {

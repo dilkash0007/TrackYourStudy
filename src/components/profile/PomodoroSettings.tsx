@@ -7,6 +7,7 @@ import {
   MusicalNoteIcon,
   SpeakerWaveIcon,
   WrenchScrewdriverIcon,
+  CogIcon,
 } from "@heroicons/react/24/outline";
 
 export const PomodoroSettings = () => {
@@ -18,15 +19,19 @@ export const PomodoroSettings = () => {
   );
 
   // Local state for input values
-  const [focusTime, setFocusTime] = useState(pomodoroPreferences.focusTime);
+  const [focusTime, setFocusTime] = useState(
+    pomodoroPreferences.focusTime || 25
+  );
   const [shortBreakTime, setShortBreakTime] = useState(
-    pomodoroPreferences.shortBreakTime
+    pomodoroPreferences.shortBreakTime || 5
   );
   const [longBreakTime, setLongBreakTime] = useState(
-    pomodoroPreferences.longBreakTime
+    pomodoroPreferences.longBreakTime || 15
   );
   const [sessionsUntilLongBreak, setSessionsUntilLongBreak] = useState(
-    pomodoroPreferences.sessionsUntilLongBreak
+    pomodoroPreferences.sessionsUntilLongBreak ||
+      pomodoroPreferences.longBreakInterval ||
+      4
   );
 
   // Function to handle saving time settings
@@ -35,12 +40,13 @@ export const PomodoroSettings = () => {
       focusTime,
       shortBreakTime,
       longBreakTime,
+      longBreakInterval: sessionsUntilLongBreak,
       sessionsUntilLongBreak,
     });
   };
 
   // Toggle handler for boolean preferences
-  const handleToggle = (preference: keyof typeof pomodoroPreferences) => {
+  const handleToggle = (preference: keyof PomodoroPreferences) => {
     if (typeof pomodoroPreferences[preference] === "boolean") {
       updatePomodoroPreferences({
         [preference]: !pomodoroPreferences[preference],
@@ -204,7 +210,11 @@ export const PomodoroSettings = () => {
             </label>
             <select
               id="timerSound"
-              value={pomodoroPreferences.timerCompleteSound}
+              value={
+                pomodoroPreferences.timerCompleteSound ||
+                pomodoroPreferences.soundTheme ||
+                "bell"
+              }
               onChange={handleSoundChange}
               className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
             >
@@ -221,23 +231,30 @@ export const PomodoroSettings = () => {
               htmlFor="soundVolume"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
             >
-              Sound Volume: {pomodoroPreferences.soundVolume}%
+              Sound Volume:{" "}
+              {pomodoroPreferences.soundVolume ||
+                pomodoroPreferences.alarmVolume ||
+                50}
+              %
             </label>
             <input
-              id="soundVolume"
               type="range"
+              id="soundVolume"
               min="0"
               max="100"
-              step="5"
-              value={pomodoroPreferences.soundVolume}
+              value={
+                pomodoroPreferences.soundVolume ||
+                pomodoroPreferences.alarmVolume ||
+                50
+              }
               onChange={handleVolumeChange}
-              className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+              className="w-full"
             />
           </div>
         </div>
       </motion.div>
 
-      {/* Toggle Options */}
+      {/* Automation Settings */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -245,56 +262,48 @@ export const PomodoroSettings = () => {
         className="bg-white dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm p-5"
       >
         <div className="flex items-center mb-4">
-          <BellIcon className="h-5 w-5 text-indigo-500 dark:text-indigo-400 mr-2" />
+          <CogIcon className="h-5 w-5 text-indigo-500 dark:text-indigo-400 mr-2" />
           <h3 className="text-lg font-medium text-gray-800 dark:text-white">
-            Additional Options
+            Automation Settings
           </h3>
         </div>
 
         <div className="space-y-4">
           {[
             {
-              id: "autoStartBreaks",
-              title: "Auto-start Breaks",
+              id: "autoStartFocus",
+              label: "Auto-start Focus Sessions",
               description:
-                "Automatically start break timer when focus session completes",
-              value: pomodoroPreferences.autoStartBreaks,
+                "Automatically start the next focus session after a break",
+              value:
+                pomodoroPreferences.autoStartFocus ||
+                pomodoroPreferences.autoStartPomodoros ||
+                false,
             },
             {
-              id: "autoStartFocus",
-              title: "Auto-start Focus",
+              id: "autoStartBreaks",
+              label: "Auto-start Breaks",
               description:
-                "Automatically start next focus session when break completes",
-              value: pomodoroPreferences.autoStartFocus,
+                "Automatically start breaks when a focus session completes",
+              value: pomodoroPreferences.autoStartBreaks || false,
             },
             {
               id: "showNotifications",
-              title: "Show Notifications",
-              description: "Display browser notifications when timer completes",
-              value: pomodoroPreferences.showNotifications,
+              label: "Show Desktop Notifications",
+              description: "Display notifications when timers complete",
+              value: pomodoroPreferences.showNotifications || true,
             },
             {
               id: "playSound",
-              title: "Play Sound",
-              description: "Play sound when timer completes",
-              value: pomodoroPreferences.playSound,
+              label: "Play Sound",
+              description: "Play sound when timers complete",
+              value: pomodoroPreferences.playSound || true,
             },
           ].map((option) => (
-            <div
-              key={option.id}
-              className="flex items-center justify-between p-3 border border-gray-100 dark:border-gray-700 rounded-lg"
-            >
-              <div>
-                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {option.title}
-                </h4>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {option.description}
-                </p>
-              </div>
+            <div key={option.id} className="flex items-start space-x-3">
               <button
                 onClick={() =>
-                  handleToggle(option.id as keyof typeof pomodoroPreferences)
+                  handleToggle(option.id as keyof PomodoroPreferences)
                 }
                 className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
                   option.value
@@ -305,12 +314,19 @@ export const PomodoroSettings = () => {
                 aria-checked={option.value}
               >
                 <span
-                  aria-hidden="true"
                   className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
                     option.value ? "translate-x-5" : "translate-x-0"
                   }`}
                 />
               </button>
+              <div className="flex flex-col">
+                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                  {option.label}
+                </span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  {option.description}
+                </span>
+              </div>
             </div>
           ))}
         </div>

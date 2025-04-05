@@ -37,19 +37,42 @@ export const PomodoroPage = () => {
     return () => unsubscribe();
   }, []);
 
-  const stats = pomodoroStore?.stats || {
+  // Initialize stats with default values
+  const [focusStats, setFocusStats] = useState({
     totalFocusTime: 0,
     totalCompletedSessions: 0,
     streak: 0,
     dailyStats: {},
-  };
+  });
+
+  // Calculate focus time for today
+  const today = new Date().toISOString().split("T")[0];
+  const todayFocusTime =
+    focusStats.dailyStats && focusStats.dailyStats[today]
+      ? focusStats.dailyStats[today].focusTime
+      : 0;
+
+  // Update focus stats from localStorage
+  useEffect(() => {
+    try {
+      const storageKey = "pomodoro-storage";
+      const storageData = JSON.parse(localStorage.getItem(storageKey) || "{}");
+      setFocusStats({
+        totalFocusTime: storageData.totalFocusTime || 0,
+        totalCompletedSessions: storageData.completedSessionsCount || 0,
+        streak: storageData.streak || 0,
+        dailyStats: storageData.dailyStats || {},
+      });
+    } catch (error) {
+      console.error("Error reading pomodoro stats:", error);
+    }
+  }, [sessions]); // Update when sessions change
 
   // Get tasks safely
   const taskStore = useTaskStore();
   const tasks = taskStore?.tasks || [];
 
   // Filter sessions for today
-  const today = new Date().toISOString().split("T")[0];
   const todaySessions = Array.isArray(sessions)
     ? sessions.filter(
         (session) =>
@@ -130,7 +153,7 @@ export const PomodoroPage = () => {
                 Total Focus Time
               </h2>
               <p className="text-xl font-semibold text-gray-900 dark:text-white">
-                {formatTime(stats.totalFocusTime || 0)}
+                {formatTime(focusStats.totalFocusTime || 0)}
               </p>
             </div>
           </div>
@@ -152,7 +175,7 @@ export const PomodoroPage = () => {
                 Sessions Completed
               </h2>
               <p className="text-xl font-semibold text-gray-900 dark:text-white">
-                {stats.totalCompletedSessions || 0}
+                {focusStats.totalCompletedSessions || 0}
               </p>
             </div>
           </div>
@@ -174,7 +197,8 @@ export const PomodoroPage = () => {
                 Current Streak
               </h2>
               <p className="text-xl font-semibold text-gray-900 dark:text-white">
-                {stats.streak || 0} {(stats.streak || 0) === 1 ? "day" : "days"}
+                {focusStats.streak || 0}{" "}
+                {(focusStats.streak || 0) === 1 ? "day" : "days"}
               </p>
             </div>
           </div>
@@ -196,9 +220,7 @@ export const PomodoroPage = () => {
                 Today's Focus
               </h2>
               <p className="text-xl font-semibold text-gray-900 dark:text-white">
-                {formatTime(
-                  (stats.dailyStats && stats.dailyStats[today]?.focusTime) || 0
-                )}
+                {formatTime(todayFocusTime)}
               </p>
             </div>
           </div>

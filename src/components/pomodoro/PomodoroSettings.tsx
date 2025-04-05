@@ -1,8 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { usePomodoroStore } from "../../store/pomodoroStore";
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import { requestNotificationPermission } from "../../utils/pomodoroHelpers";
 
 interface PomodoroSettingsProps {
   onClose: () => void;
@@ -14,16 +13,14 @@ export const PomodoroSettings = ({ onClose }: PomodoroSettingsProps) => {
 
   // Local state to track form values
   const [formData, setFormData] = useState({
-    focusDuration: settings.focusDuration,
-    shortBreakDuration: settings.shortBreakDuration,
-    longBreakDuration: settings.longBreakDuration,
+    focusDuration: settings.focusDuration / 60, // Convert seconds to minutes for UI
+    shortBreakDuration: settings.shortBreakDuration / 60,
+    longBreakDuration: settings.longBreakDuration / 60,
     sessionsBeforeLongBreak: settings.sessionsBeforeLongBreak,
     autoStartBreaks: settings.autoStartBreaks,
     autoStartPomodoros: settings.autoStartPomodoros,
-    soundEnabled: settings.soundEnabled,
-    backgroundSoundEnabled: settings.backgroundSoundEnabled,
-    backgroundSoundType: settings.backgroundSoundType,
-    notificationsEnabled: settings.notificationsEnabled,
+    sound: settings.sound,
+    volume: settings.volume,
   });
 
   // Handle form input changes
@@ -46,16 +43,15 @@ export const PomodoroSettings = ({ onClose }: PomodoroSettingsProps) => {
   // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateSettings(formData);
+    // Convert minutes back to seconds when saving to store
+    updateSettings({
+      ...formData,
+      focusDuration: formData.focusDuration * 60,
+      shortBreakDuration: formData.shortBreakDuration * 60,
+      longBreakDuration: formData.longBreakDuration * 60,
+    });
     onClose();
   };
-
-  // Request notification permission when enabling notifications
-  useEffect(() => {
-    if (formData.notificationsEnabled) {
-      requestNotificationPermission();
-    }
-  }, [formData.notificationsEnabled]);
 
   return (
     <motion.div
@@ -226,77 +222,45 @@ export const PomodoroSettings = ({ onClose }: PomodoroSettingsProps) => {
               Sound
             </h3>
 
-            <div className="flex items-start space-x-3">
-              <div className="flex h-5 items-center">
-                <input
-                  type="checkbox"
-                  id="soundEnabled"
-                  name="soundEnabled"
-                  checked={formData.soundEnabled}
-                  onChange={handleChange}
-                  className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700"
-                />
-              </div>
-              <div className="text-sm">
-                <label
-                  htmlFor="soundEnabled"
-                  className="font-medium text-gray-700 dark:text-gray-300"
-                >
-                  Sound notifications
-                </label>
-                <p className="text-gray-500 dark:text-gray-400">
-                  Play sound when timer starts, ends, and breaks end
-                </p>
-              </div>
+            <div>
+              <label
+                htmlFor="sound"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Timer Complete Sound
+              </label>
+              <select
+                id="sound"
+                name="sound"
+                value={formData.sound}
+                onChange={handleChange}
+                className="mt-1 block w-full rounded-md border-gray-300 bg-white py-2 pl-3 pr-10 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:text-sm"
+              >
+                <option value="bell">Bell</option>
+                <option value="digital">Digital</option>
+                <option value="zen">Zen</option>
+                <option value="none">None</option>
+              </select>
             </div>
 
-            <div className="flex items-start space-x-3">
-              <div className="flex h-5 items-center">
-                <input
-                  type="checkbox"
-                  id="backgroundSoundEnabled"
-                  name="backgroundSoundEnabled"
-                  checked={formData.backgroundSoundEnabled}
-                  onChange={handleChange}
-                  className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700"
-                />
-              </div>
-              <div className="text-sm">
-                <label
-                  htmlFor="backgroundSoundEnabled"
-                  className="font-medium text-gray-700 dark:text-gray-300"
-                >
-                  Background sound
-                </label>
-                <p className="text-gray-500 dark:text-gray-400">
-                  Play ambient sound during focus and break sessions
-                </p>
-              </div>
+            <div>
+              <label
+                htmlFor="volume"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Sound Volume: {formData.volume}%
+              </label>
+              <input
+                type="range"
+                id="volume"
+                name="volume"
+                min="0"
+                max="100"
+                value={formData.volume}
+                onChange={handleChange}
+                className="mt-1 block w-full rounded-md focus:outline-none focus:ring-indigo-500 dark:bg-gray-700"
+              />
             </div>
-
-            {formData.backgroundSoundEnabled && (
-              <div>
-                <label
-                  htmlFor="backgroundSoundType"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >
-                  Background Sound Type
-                </label>
-                <select
-                  id="backgroundSoundType"
-                  name="backgroundSoundType"
-                  value={formData.backgroundSoundType}
-                  onChange={handleChange}
-                  className="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:text-sm"
-                >
-                  <option value="none">None</option>
-                  <option value="whitenoise">White Noise</option>
-                  <option value="rain">Rain</option>
-                  <option value="coffee">Coffee Shop</option>
-                  <option value="forest">Forest</option>
-                </select>
-              </div>
-            )}
           </div>
 
           <div className="space-y-4">
@@ -329,19 +293,12 @@ export const PomodoroSettings = ({ onClose }: PomodoroSettingsProps) => {
             </div>
           </div>
 
-          <div className="flex justify-end space-x-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
-            >
-              Cancel
-            </button>
+          <div className="flex justify-end">
             <button
               type="submit"
-              className="rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+              className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
             >
-              Save Changes
+              Save Settings
             </button>
           </div>
         </form>

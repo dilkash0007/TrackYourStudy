@@ -109,10 +109,16 @@ export interface PomodoroPreferences {
   shortBreakTime: number; // in minutes
   longBreakTime: number; // in minutes
   longBreakInterval: number; // after how many sessions
+  sessionsUntilLongBreak: number; // Alias for longBreakInterval for backward compatibility
   autoStartBreaks: boolean;
   autoStartPomodoros: boolean;
   soundTheme: "default" | "nature" | "minimal" | "none";
   alarmVolume: number; // 0-100
+  timerCompleteSound: string; // Sound file to play when timer completes
+  soundVolume: number; // 0-100
+  autoStartFocus: boolean; // Auto start focus session
+  showNotifications: boolean; // Show notifications
+  playSound: boolean; // Play sound when timer completes
 }
 
 export interface SecuritySettings {
@@ -209,10 +215,16 @@ const createDefaultPomodoroPreferences = (): PomodoroPreferences => ({
   shortBreakTime: 5,
   longBreakTime: 15,
   longBreakInterval: 4,
+  sessionsUntilLongBreak: 4,
   autoStartBreaks: false,
   autoStartPomodoros: false,
   soundTheme: "default",
   alarmVolume: 80,
+  timerCompleteSound: "",
+  soundVolume: 80,
+  autoStartFocus: false,
+  showNotifications: true,
+  playSound: true,
 });
 
 const createDefaultSecuritySettings = (): SecuritySettings => ({

@@ -334,7 +334,7 @@ export const PomodoroTimer = () => {
                   <div
                     key={index}
                     className={`h-3 w-3 rounded-full ${
-                      index < currentSession
+                      currentSession !== null && index < currentSession
                         ? "bg-indigo-500"
                         : "bg-gray-200 dark:bg-gray-700"
                     }`}
