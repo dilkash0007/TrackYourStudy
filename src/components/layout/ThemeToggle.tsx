@@ -9,7 +9,7 @@ import type { ThemeMode } from "../../store/userStore";
 import { useTheme } from "../../hooks/useTheme";
 
 export const ThemeToggle = () => {
-  // Get theme and updateTheme from store
+  // Get theme and updateTheme from store with fallbacks
   const theme = useUserStore((state) => state.theme) || "system";
   const updateTheme = useUserStore((state) => state.updateTheme);
   const updateUIPreferences = useUserStore(
@@ -27,9 +27,18 @@ export const ThemeToggle = () => {
         : "light";
 
     setCurrentTheme(nextTheme);
-    updateTheme(nextTheme);
+
+    // Update store if functions exist
+    if (typeof updateTheme === "function") {
+      updateTheme(nextTheme);
+    }
+
     // Update both theme and uiPreferences.theme to stay in sync
-    updateUIPreferences({ theme: nextTheme });
+    if (typeof updateUIPreferences === "function") {
+      updateUIPreferences({ theme: nextTheme });
+    }
+
+    // Always save to localStorage as fallback
     localStorage.setItem("theme", nextTheme);
     applyTheme(nextTheme);
   };
@@ -60,6 +69,14 @@ export const ThemeToggle = () => {
 
   // Apply theme on initial load and when theme changes
   useEffect(() => {
+    // First check localStorage (as fallback)
+    const savedTheme = localStorage.getItem("theme") as ThemeMode | null;
+    if (savedTheme && savedTheme !== currentTheme) {
+      setCurrentTheme(savedTheme as ThemeMode);
+      applyTheme(savedTheme as ThemeMode);
+      return;
+    }
+
     applyTheme(currentTheme);
 
     // Listen for system theme changes if using system theme

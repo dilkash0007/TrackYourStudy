@@ -9,12 +9,19 @@ import {
 import { formatTime } from "../../utils/pomodoroHelpers";
 
 export const HeaderTimer: React.FC = () => {
-  const { currentSession, status, timeRemaining } = usePomodoroStore();
+  const pomodoroState = usePomodoroStore();
+  const currentSession = pomodoroState?.currentSession;
+  const status = pomodoroState?.status || TimerStatus.Idle;
+  const timeRemaining = pomodoroState?.timeRemaining || 0;
   const [displayTime, setDisplayTime] = useState("--:--");
 
   // Update display time when timeRemaining changes
   useEffect(() => {
-    setDisplayTime(formatTime(timeRemaining));
+    if (typeof timeRemaining === "number" && timeRemaining >= 0) {
+      setDisplayTime(formatTime(timeRemaining));
+    } else {
+      setDisplayTime("--:--");
+    }
   }, [timeRemaining]);
 
   // Only show when a session is active
@@ -42,12 +49,13 @@ export const HeaderTimer: React.FC = () => {
     }
   };
 
-  const sessionTypeLabel =
-    currentSession?.type === TimerType.Focus
+  const sessionTypeLabel = currentSession?.type
+    ? currentSession.type === TimerType.Focus
       ? "Focus"
-      : currentSession?.type === TimerType.ShortBreak
+      : currentSession.type === TimerType.ShortBreak
       ? "Break"
-      : "Long Break";
+      : "Long Break"
+    : "Timer";
 
   return (
     <Link

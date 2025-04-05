@@ -11,12 +11,19 @@ import { formatTime } from "../../utils/pomodoroHelpers";
 
 export const FloatingTimer: React.FC = () => {
   const [isVisible, setIsVisible] = useState(true);
-  const { currentSession, status, timeRemaining } = usePomodoroStore();
+  const pomodoroState = usePomodoroStore();
+  const currentSession = pomodoroState?.currentSession;
+  const status = pomodoroState?.status || TimerStatus.Idle;
+  const timeRemaining = pomodoroState?.timeRemaining || 0;
   const [displayTime, setDisplayTime] = useState("--:--");
 
   // Update display time when timeRemaining changes
   useEffect(() => {
-    setDisplayTime(formatTime(timeRemaining));
+    if (typeof timeRemaining === "number" && timeRemaining >= 0) {
+      setDisplayTime(formatTime(timeRemaining));
+    } else {
+      setDisplayTime("--:--");
+    }
   }, [timeRemaining]);
 
   // Only show when a session is active
@@ -41,6 +48,14 @@ export const FloatingTimer: React.FC = () => {
 
   if (!shouldDisplay || !isVisible) return null;
 
+  const sessionTypeLabel = currentSession?.type
+    ? currentSession.type === TimerType.Focus
+      ? "Focus"
+      : currentSession.type === TimerType.ShortBreak
+      ? "Short Break"
+      : "Long Break"
+    : "Timer";
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 50 }}
@@ -53,11 +68,7 @@ export const FloatingTimer: React.FC = () => {
         <div className="p-3 flex items-center space-x-3">
           <div className="flex flex-col">
             <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-              {currentSession?.type === TimerType.Focus
-                ? "Focus"
-                : currentSession?.type === TimerType.ShortBreak
-                ? "Short Break"
-                : "Long Break"}
+              {sessionTypeLabel}
             </span>
             <span className="text-lg font-bold text-gray-800 dark:text-white">
               {displayTime}
