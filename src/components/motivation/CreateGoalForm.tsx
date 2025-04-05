@@ -8,7 +8,10 @@ interface CreateGoalFormProps {
 }
 
 export const CreateGoalForm = ({ onClose }: CreateGoalFormProps) => {
-  const { addGoal } = useMotivationStore();
+  const motivationStore = useMotivationStore();
+  const addGoal = motivationStore?.addGoal;
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -24,21 +27,69 @@ export const CreateGoalForm = ({ onClose }: CreateGoalFormProps) => {
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]:
-        name === "targetValue" || name === "currentValue"
-          ? Number(value)
-          : value,
-    }));
+    try {
+      const { name, value } = e.target;
+      setFormData((prev) => ({
+        ...prev,
+        [name]:
+          name === "targetValue" || name === "currentValue"
+            ? Number(value)
+            : value,
+      }));
+
+      // Clear any previous errors
+      if (error) setError(null);
+    } catch (err) {
+      console.error("Error updating form data:", err);
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
 
-    addGoal(formData);
-    onClose();
+    try {
+      // Validate form data
+      if (!formData.title.trim()) {
+        setError("Please enter a goal title.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (formData.targetValue <= 0) {
+        setError("Target amount must be greater than zero.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Validate dates
+      const startDate = new Date(formData.startDate);
+      const endDate = new Date(formData.endDate);
+
+      if (endDate < startDate) {
+        setError("End date cannot be earlier than start date.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Check if addGoal function exists
+      if (typeof addGoal !== "function") {
+        setError("Could not save goal. Please try again later.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Save goal
+      addGoal(formData);
+
+      // Close form on success
+      onClose();
+    } catch (err) {
+      console.error("Failed to save goal:", err);
+      setError("An error occurred while saving your goal. Please try again.");
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -61,6 +112,12 @@ export const CreateGoalForm = ({ onClose }: CreateGoalFormProps) => {
         </div>
 
         <form onSubmit={handleSubmit} className="p-6">
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 rounded-md text-sm">
+              {error}
+            </div>
+          )}
+
           <div className="mb-4">
             <label
               htmlFor="title"
@@ -168,15 +225,19 @@ export const CreateGoalForm = ({ onClose }: CreateGoalFormProps) => {
               type="button"
               onClick={onClose}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-white dark:bg-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600"
+              disabled={isSubmitting}
             >
               Cancel
             </button>
 
             <button
               type="submit"
-              className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800"
+              disabled={isSubmitting}
+              className={`px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800 ${
+                isSubmitting ? "opacity-70 cursor-not-allowed" : ""
+              }`}
             >
-              Create Goal
+              {isSubmitting ? "Creating..." : "Create Goal"}
             </button>
           </div>
         </form>

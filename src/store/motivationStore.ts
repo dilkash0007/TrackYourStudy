@@ -11,11 +11,11 @@ export interface Quote {
 
 export interface Achievement {
   id: string;
-  title: string;
+  name: string;
   description: string;
-  icon: string;
+  badge: string;
+  progress: number;
   unlockedAt: string | null;
-  progress: number; // 0-100
 }
 
 export interface Badge {
@@ -24,6 +24,16 @@ export interface Badge {
   icon: string;
   description: string;
   unlockedAt: string | null;
+}
+
+export interface MusicPlaylist {
+  id: string;
+  name: string;
+  description: string;
+  imageUrl: string;
+  tracks: number;
+  link: string;
+  category: "focus" | "lofi" | "energetic" | "classical" | "nature";
 }
 
 export interface Goal {
@@ -35,16 +45,6 @@ export interface Goal {
   startDate: string;
   endDate: string;
   completed: boolean;
-}
-
-export interface MusicPlaylist {
-  id: string;
-  name: string;
-  description: string;
-  imageUrl: string;
-  tracks: number;
-  link: string;
-  category: "focus" | "lofi" | "meditation" | "energetic";
 }
 
 export interface Reward {
@@ -104,6 +104,19 @@ export interface MotivationStore {
   theme: "light" | "dark" | "system";
   setTheme: (theme: "light" | "dark" | "system") => void;
 }
+
+// Helper function to fetch a random quote from an API
+export const fetchRandomQuote = async (): Promise<Quote | null> => {
+  try {
+    // For production, this would be a real API call
+    // For now, we'll return a random quote from our local quotes
+    const randomIndex = Math.floor(Math.random() * localQuotes.length);
+    return localQuotes[randomIndex];
+  } catch (error) {
+    console.error("Error fetching random quote:", error);
+    return null;
+  }
+};
 
 // Sample quotes for initial state
 const sampleQuotes: Quote[] = [];
@@ -288,65 +301,146 @@ export const useMotivationStore = create<MotivationStore>()(
 
       // Quote functions
       fetchNewQuote: () => {
-        const quotes = localQuotes;
-        const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
-        set({ currentQuote: randomQuote });
-      },
-
-      saveQuote: (quote) => {
-        const savedQuotes = get().savedQuotes;
-        if (!savedQuotes.some((q) => q.id === quote.id)) {
+        try {
+          const quotes = localQuotes;
+          if (quotes && quotes.length > 0) {
+            const randomQuote =
+              quotes[Math.floor(Math.random() * quotes.length)];
+            set({ currentQuote: randomQuote });
+          } else {
+            // Fallback quote if no quotes are available
+            set({
+              currentQuote: {
+                id: "fallback",
+                text: "Education is the passport to the future, for tomorrow belongs to those who prepare for it today.",
+                author: "Malcolm X",
+                isFavorite: false,
+              },
+            });
+          }
+        } catch (error) {
+          console.error("Error fetching new quote:", error);
+          // Set a fallback quote
           set({
-            savedQuotes: [...savedQuotes, { ...quote, isFavorite: true }],
+            currentQuote: {
+              id: "error-fallback",
+              text: "The best preparation for tomorrow is doing your best today.",
+              author: "H. Jackson Brown Jr.",
+              isFavorite: false,
+            },
           });
         }
       },
 
+      saveQuote: (quote) => {
+        try {
+          if (!quote) return;
+
+          const savedQuotes = get().savedQuotes || [];
+          if (!savedQuotes.some((q) => q.id === quote.id)) {
+            set({
+              savedQuotes: [...savedQuotes, { ...quote, isFavorite: true }],
+            });
+          }
+        } catch (error) {
+          console.error("Error saving quote:", error);
+        }
+      },
+
       removeFromSaved: (quoteId) => {
-        set({ savedQuotes: get().savedQuotes.filter((q) => q.id !== quoteId) });
+        try {
+          if (!quoteId) return;
+
+          const savedQuotes = get().savedQuotes || [];
+          set({
+            savedQuotes: savedQuotes.filter((q) => q.id !== quoteId),
+          });
+        } catch (error) {
+          console.error("Error removing quote from saved:", error);
+        }
       },
 
       // Achievement functions
       updateAchievementProgress: (id, progress) => {
-        const achievements = get().achievements.map((a) =>
-          a.id === id ? { ...a, progress: Math.min(progress, 100) } : a
-        );
+        try {
+          if (!id) return;
 
-        // Auto-unlock if progress reaches 100%
-        if (progress >= 100) {
-          const achievement = achievements.find((a) => a.id === id);
-          if (achievement && !achievement.unlockedAt) {
-            achievement.unlockedAt = new Date().toISOString();
+          const achievements = get().achievements || [];
+          const updatedAchievements = achievements.map((a) =>
+            a.id === id ? { ...a, progress: Math.min(progress, 100) } : a
+          );
+
+          // Auto-unlock if progress reaches 100%
+          if (progress >= 100) {
+            const achievement = updatedAchievements.find((a) => a.id === id);
+            if (achievement && !achievement.unlockedAt) {
+              achievement.unlockedAt = new Date().toISOString();
+            }
           }
-        }
 
-        set({ achievements });
+          set({ achievements: updatedAchievements });
+        } catch (error) {
+          console.error("Error updating achievement progress:", error);
+        }
       },
 
       unlockAchievement: (id) => {
-        const achievements = get().achievements.map((a) =>
-          a.id === id
-            ? { ...a, unlockedAt: new Date().toISOString(), progress: 100 }
-            : a
-        );
-        set({ achievements });
+        try {
+          if (!id) return;
+
+          const achievements = get().achievements || [];
+          set({
+            achievements: achievements.map((a) =>
+              a.id === id
+                ? { ...a, progress: 100, unlockedAt: new Date().toISOString() }
+                : a
+            ),
+          });
+        } catch (error) {
+          console.error("Error unlocking achievement:", error);
+        }
       },
 
       // Streak functions
       incrementStreak: () => {
-        const { currentStreak, longestStreak, lastActiveDate } = get();
-        const today = new Date().toISOString().split("T")[0];
+        try {
+          const today = new Date().toISOString().split("T")[0];
+          const {
+            lastActiveDate,
+            currentStreak = 1,
+            longestStreak = 1,
+          } = get();
 
-        // Only increment if not already updated today
-        if (lastActiveDate !== today) {
+          // If this is the first visit or there's no last active date, set it to today
+          if (!lastActiveDate) {
+            set({
+              lastActiveDate: today,
+              currentStreak: 1,
+              longestStreak: 1,
+            });
+            return;
+          }
+
+          // Skip if already visited today
+          if (lastActiveDate === today) {
+            return;
+          }
+
+          // Check if last visit was yesterday
+          const lastActive = new Date(lastActiveDate);
           const yesterday = new Date();
           yesterday.setDate(yesterday.getDate() - 1);
           const yesterdayStr = yesterday.toISOString().split("T")[0];
 
-          // Check if streak is continuous (last active date was yesterday)
-          const newStreak =
-            lastActiveDate === yesterdayStr ? currentStreak + 1 : 1; // Reset streak if there was a gap
+          // Increment streak if visited yesterday, otherwise reset to 1
+          let newStreak;
+          if (lastActiveDate === yesterdayStr) {
+            newStreak = currentStreak + 1;
+          } else {
+            newStreak = 1; // Reset streak if not consecutive
+          }
 
+          // Update longest streak if needed
           const newLongestStreak = Math.max(newStreak, longestStreak);
 
           set({
@@ -357,94 +451,158 @@ export const useMotivationStore = create<MotivationStore>()(
 
           // Check if any streak-based badges should be unlocked
           if (newStreak >= 7) {
-            const weekWarriorBadge = get().badges.find((b) => b.id === "2");
+            const weekWarriorBadge = get().badges?.find((b) => b.id === "2");
             if (weekWarriorBadge && !weekWarriorBadge.unlockedAt) {
               get().unlockBadge("2");
             }
           }
+        } catch (error) {
+          console.error("Error incrementing streak:", error);
         }
       },
 
       resetStreak: () => {
-        set({ currentStreak: 0, lastActiveDate: null });
+        try {
+          set({
+            currentStreak: 0,
+            lastActiveDate: null,
+          });
+        } catch (error) {
+          console.error("Error resetting streak:", error);
+        }
       },
 
-      // Badge functions
       unlockBadge: (id) => {
-        const badges = get().badges.map((b) =>
-          b.id === id ? { ...b, unlockedAt: new Date().toISOString() } : b
-        );
-        set({ badges });
+        try {
+          if (!id) return;
+
+          const badges = get().badges || [];
+          set({
+            badges: badges.map((b) =>
+              b.id === id ? { ...b, unlockedAt: new Date().toISOString() } : b
+            ),
+          });
+        } catch (error) {
+          console.error("Error unlocking badge:", error);
+        }
       },
 
       // Goal functions
       addGoal: (goal) => {
-        const newGoal = {
-          ...goal,
-          id: Date.now().toString(),
-          completed: false,
-        };
-        set({ goals: [...get().goals, newGoal] });
+        try {
+          if (!goal || !goal.title) return;
+
+          const newGoal = {
+            ...goal,
+            id: Date.now().toString(),
+            completed: false,
+          };
+          const currentGoals = get().goals || [];
+          set({ goals: [...currentGoals, newGoal] });
+        } catch (error) {
+          console.error("Error adding goal:", error);
+        }
       },
 
       updateGoalProgress: (id, currentValue) => {
-        const goals = get().goals.map((g) => {
-          if (g.id === id) {
-            const completed = currentValue >= g.targetValue;
-            return { ...g, currentValue, completed };
-          }
-          return g;
-        });
-        set({ goals });
+        try {
+          if (!id) return;
+
+          const goals = get().goals || [];
+          const updatedGoals = goals.map((g) => {
+            if (g.id === id) {
+              const completed = currentValue >= g.targetValue;
+              return { ...g, currentValue, completed };
+            }
+            return g;
+          });
+          set({ goals: updatedGoals });
+        } catch (error) {
+          console.error("Error updating goal progress:", error);
+        }
       },
 
       completeGoal: (id) => {
-        const goals = get().goals.map((g) =>
-          g.id === id
-            ? { ...g, completed: true, currentValue: g.targetValue }
-            : g
-        );
-        set({ goals });
+        try {
+          if (!id) return;
+
+          const goals = get().goals || [];
+          const updatedGoals = goals.map((g) =>
+            g.id === id
+              ? { ...g, completed: true, currentValue: g.targetValue }
+              : g
+          );
+          set({ goals: updatedGoals });
+        } catch (error) {
+          console.error("Error completing goal:", error);
+        }
       },
 
       removeGoal: (id) => {
-        set({ goals: get().goals.filter((g) => g.id !== id) });
+        try {
+          if (!id) return;
+
+          const goals = get().goals || [];
+          set({ goals: goals.filter((g) => g.id !== id) });
+        } catch (error) {
+          console.error("Error removing goal:", error);
+        }
       },
 
       // Reward functions
       unlockReward: (id) => {
-        const rewards = get().rewards.map((r) =>
-          r.id === id ? { ...r, unlockedAt: new Date().toISOString() } : r
-        );
-        set({ rewards });
+        try {
+          if (!id) return;
+
+          const rewards = get().rewards || [];
+          const updatedRewards = rewards.map((r) =>
+            r.id === id ? { ...r, unlockedAt: new Date().toISOString() } : r
+          );
+          set({ rewards: updatedRewards });
+        } catch (error) {
+          console.error("Error unlocking reward:", error);
+        }
       },
 
       // Preference functions
       toggleNotifications: () => {
-        set({ notifications: !get().notifications });
+        try {
+          set({ notifications: !get().notifications });
+        } catch (error) {
+          console.error("Error toggling notifications:", error);
+        }
       },
 
       setTheme: (theme) => {
-        set({ theme });
+        try {
+          if (!theme) return;
+          set({ theme });
+        } catch (error) {
+          console.error("Error setting theme:", error);
+        }
       },
 
       testAddStreakDay: () => {
-        const { currentStreak, longestStreak } = get();
-        const newStreak = currentStreak + 1;
-        const newLongestStreak = Math.max(newStreak, longestStreak);
+        try {
+          const { currentStreak = 0, longestStreak = 0 } = get();
+          const newStreak = currentStreak + 1;
+          const newLongestStreak = Math.max(newStreak, longestStreak);
 
-        set({
-          currentStreak: newStreak,
-          longestStreak: newLongestStreak,
-          lastActiveDate: new Date().toISOString().split("T")[0],
-        });
+          set({
+            currentStreak: newStreak,
+            longestStreak: newLongestStreak,
+            lastActiveDate: new Date().toISOString().split("T")[0],
+          });
 
-        // Check if any streak-based badges should be unlocked
-        if (newStreak >= 7) {
-          const weekWarriorBadge = get().badges.find((b) => b.id === "2");
-          if (weekWarriorBadge && !weekWarriorBadge.unlockedAt) {
-            get().unlockBadge("2");
+          // Check if any streak-based badges should be unlocked
+          if (newStreak >= 7) {
+            const weekWarriorBadge = get().badges?.find((b) => b.id === "2");
+            if (weekWarriorBadge && !weekWarriorBadge.unlockedAt) {
+              get().unlockBadge("2");
+            }
           }
+        } catch (error) {
+          console.error("Error in testAddStreakDay:", error);
         }
       },
     }),
@@ -453,16 +611,3 @@ export const useMotivationStore = create<MotivationStore>()(
     }
   )
 );
-
-// Helper function to get a random quote from an external API
-export const fetchRandomQuote = async (): Promise<Quote | null> => {
-  // Use local quotes instead of the API
-  const randomIndex = Math.floor(Math.random() * localQuotes.length);
-  const randomQuote = localQuotes[randomIndex];
-
-  // Generate a unique ID based on timestamp to ensure we get different quotes
-  return {
-    ...randomQuote,
-    id: `${randomQuote.id}-${Date.now()}`, // Add timestamp to make ID unique
-  };
-};

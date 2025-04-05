@@ -4,7 +4,10 @@ import { FireIcon, SparklesIcon } from "@heroicons/react/24/outline";
 import { useMotivationStore } from "../../store/motivationStore";
 
 export const StreakDisplay: React.FC = () => {
-  const { currentStreak = 0, longestStreak = 0 } = useMotivationStore() || {};
+  const motivationStore = useMotivationStore();
+  // Provide default values if properties are undefined
+  const currentStreak = motivationStore?.currentStreak ?? 0;
+  const longestStreak = motivationStore?.longestStreak ?? 0;
 
   // Generate message based on streak length
   const getStreakMessage = () => {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useMotivationStore } from "../store/motivationStore";
 import { DailyQuote } from "../components/motivation/DailyQuote";
@@ -20,82 +20,123 @@ import {
 } from "@heroicons/react/24/outline";
 
 const MotivationPage = () => {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Get data from stores with safe access
   const motivationStore = useMotivationStore();
-  const {
-    currentStreak = 1,
-    longestStreak = 1,
-    badges = [],
-    achievements = [],
-    goals = [],
-    playlists = [],
-    rewards = [],
-    leaderboardPosition = 0,
-    incrementStreak,
-  } = motivationStore || {};
+  const currentStreak = motivationStore?.currentStreak ?? 1;
+  const longestStreak = motivationStore?.longestStreak ?? 1;
+  const badges = motivationStore?.badges ?? [];
+  const achievements = motivationStore?.achievements ?? [];
+  const goals = motivationStore?.goals ?? [];
+  const playlists = motivationStore?.playlists ?? [];
+  const rewards = motivationStore?.rewards ?? [];
+  const leaderboardPosition = motivationStore?.leaderboardPosition ?? 0;
+  const incrementStreak = motivationStore?.incrementStreak;
 
   // Get data from other stores
   const taskStore = useTaskStore();
   const pomodoroStore = usePomodoroStore();
   const plannerStore = usePlannerStore();
 
-  const tasks = taskStore?.tasks || [];
-  const sessions = pomodoroStore?.sessions || [];
-  const studySessions = plannerStore?.sessions || [];
+  const tasks = taskStore?.tasks ?? [];
+  const sessions = pomodoroStore?.sessions ?? [];
+  const studySessions = plannerStore?.sessions ?? [];
 
   // Increment streak when user visits this page
   useEffect(() => {
-    if (typeof incrementStreak === "function") {
+    const loadData = async () => {
+      setLoading(true);
+      setError(null);
+
       try {
-        incrementStreak();
+        // Try to increment streak if function exists
+        if (typeof incrementStreak === "function") {
+          incrementStreak();
+        }
+
+        setLoading(false);
       } catch (error) {
-        console.error("Error incrementing streak:", error);
+        console.error("Error loading motivation data:", error);
+        setError(
+          "Failed to load motivation data. Some features may be limited."
+        );
+        setLoading(false);
       }
-    }
+    };
+
+    loadData();
   }, [incrementStreak]);
 
   // Calculate task stats
   const taskStats = useMemo(() => {
-    const completedTasks = tasks.filter((task) => task.completedAt).length;
-    const totalTasks = tasks.length;
-    const pendingTasks = tasks.filter((task) => !task.completedAt);
-    const taskCompletionRate =
-      totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+    try {
+      const completedTasks = tasks.filter(
+        (task) => task.completedAt !== undefined && task.completedAt !== null
+      ).length;
+      const totalTasks = tasks.length;
+      const pendingTasks = tasks.filter(
+        (task) => task.completedAt === undefined || task.completedAt === null
+      );
+      const taskCompletionRate =
+        totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
-    return {
-      completedTasks,
-      totalTasks,
-      pendingTasks,
-      taskCompletionRate,
-    };
+      return {
+        completedTasks,
+        totalTasks,
+        pendingTasks,
+        taskCompletionRate,
+      };
+    } catch (error) {
+      console.error("Error calculating task stats:", error);
+      return {
+        completedTasks: 0,
+        totalTasks: 0,
+        pendingTasks: [],
+        taskCompletionRate: 0,
+      };
+    }
   }, [tasks]);
 
   // Calculate study hour stats
   const studyStats = useMemo(() => {
-    // Calculate from pomodoro sessions
-    const pomodoroHours = sessions.reduce((total, session) => {
-      return total + (session.duration || 0) / 60;
-    }, 0);
+    try {
+      // Calculate from pomodoro sessions
+      const pomodoroHours = sessions.reduce((total, session) => {
+        return total + (session.duration || 0) / 60;
+      }, 0);
 
-    // Calculate from study planner sessions
-    const plannerHours = studySessions.reduce((total, session) => {
-      try {
-        const startTime = new Date(session.startTime);
-        const endTime = new Date(session.endTime);
-        const durationHours =
-          (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
-        return total + durationHours;
-      } catch (e) {
-        return total;
-      }
-    }, 0);
+      // Calculate from study planner sessions
+      const plannerHours = studySessions.reduce((total, session) => {
+        try {
+          if (!session.startTime || !session.endTime) return total;
 
-    const totalStudyHours = pomodoroHours + plannerHours;
+          const startTime = new Date(session.startTime);
+          const endTime = new Date(session.endTime);
+          const durationHours =
+            (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+          return total + durationHours;
+        } catch (e) {
+          return total;
+        }
+      }, 0);
 
-    return {
-      totalStudyHours,
-      pomodoroHours,
-      plannerHours,
-    };
+      const totalStudyHours = pomodoroHours + plannerHours;
+
+      return {
+        totalStudyHours,
+        pomodoroHours,
+        plannerHours,
+      };
+    } catch (error) {
+      console.error("Error calculating study stats:", error);
+      return {
+        totalStudyHours: 0,
+        pomodoroHours: 0,
+        plannerHours: 0,
+      };
+    }
   }, [sessions, studySessions]);
 
   // Get completed Pomodoro sessions for today
@@ -117,6 +158,20 @@ const MotivationPage = () => {
   // For development testing only
   const isDev = process.env.NODE_ENV === "development";
 
+  if (loading) {
+    return (
+      <div className="container mx-auto px-1.5 py-8 animate-pulse">
+        <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-6"></div>
+        <div className="h-40 bg-gray-200 dark:bg-gray-700 rounded mb-6"></div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded"></div>
+          <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded"></div>
+          <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-1.5 py-8">
       <motion.h1
@@ -126,6 +181,12 @@ const MotivationPage = () => {
       >
         Your Motivation Hub
       </motion.h1>
+
+      {error && (
+        <div className="mb-4 p-4 bg-yellow-50 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 rounded-lg">
+          <p>{error}</p>
+        </div>
+      )}
 
       {/* Dev Tools - only visible in development mode */}
       {isDev && (
@@ -137,12 +198,14 @@ const MotivationPage = () => {
             <button
               onClick={() => motivationStore?.testAddStreakDay?.()}
               className="px-3 py-1 bg-amber-500 text-white text-xs rounded hover:bg-amber-600"
+              disabled={typeof motivationStore?.testAddStreakDay !== "function"}
             >
               Add Streak Day
             </button>
             <button
               onClick={() => motivationStore?.resetStreak?.()}
               className="px-3 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600"
+              disabled={typeof motivationStore?.resetStreak !== "function"}
             >
               Reset Streak
             </button>
