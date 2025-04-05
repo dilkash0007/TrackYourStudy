@@ -132,6 +132,7 @@ export const TaskForm = ({ isOpen, onClose, taskToEdit }: TaskFormProps) => {
         estimatedTime: formData.estimatedTime,
         notes: "",
         tags: processedTags,
+        pomodoroSessions: 0,
       });
 
       addNotification({

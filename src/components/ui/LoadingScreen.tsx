@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useUserStore } from "../../store/userStore";
+import { useTheme } from "../../hooks/useTheme";
 
 // Motivational quotes for the loading screen
 const motivationalQuotes = [
@@ -16,6 +18,9 @@ const motivationalQuotes = [
 
 const LoadingScreen = () => {
   const [quote, setQuote] = useState("");
+  const { isDark } = useTheme();
+  const uiPreferences = useUserStore((state) => state.uiPreferences);
+  const reducedMotion = uiPreferences?.reducedMotion || false;
 
   // Select a random quote when component mounts
   useEffect(() => {
@@ -24,11 +29,18 @@ const LoadingScreen = () => {
   }, []);
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex flex-col items-center justify-center z-50">
+    <div
+      className={`fixed inset-0 ${
+        isDark
+          ? "bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900"
+          : "bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500"
+      } 
+      flex flex-col items-center justify-center z-50`}
+    >
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: reducedMotion ? 0.2 : 0.5 }}
         className="max-w-md w-full px-4"
       >
         {/* Loading title */}
@@ -42,7 +54,12 @@ const LoadingScreen = () => {
           <motion.div
             initial={{ rotateY: 0 }}
             animate={{ rotateY: 360 }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+              ease: "easeInOut",
+              repeatDelay: reducedMotion ? 1 : 0,
+            }}
             className="absolute w-20 h-24 bg-white rounded-r-md shadow-lg origin-left"
           >
             <div className="absolute inset-y-0 left-0 w-1.5 bg-indigo-600 rounded-l-sm"></div>
@@ -55,74 +72,78 @@ const LoadingScreen = () => {
           </motion.div>
 
           {/* Floating icons */}
-          <motion.div
-            initial={{ y: 0, opacity: 0.5 }}
-            animate={{ y: -15, opacity: 1 }}
-            transition={{
-              duration: 1,
-              repeat: Infinity,
-              repeatType: "reverse",
-              ease: "easeInOut",
-            }}
-            className="absolute top-0 right-10 w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 text-white"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-            </svg>
-          </motion.div>
+          {!reducedMotion && (
+            <>
+              <motion.div
+                initial={{ y: 0, opacity: 0.5 }}
+                animate={{ y: -15, opacity: 1 }}
+                transition={{
+                  duration: 1,
+                  repeat: Infinity,
+                  repeatType: "reverse",
+                  ease: "easeInOut",
+                }}
+                className="absolute top-0 right-10 w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 text-white"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+              </motion.div>
 
-          <motion.div
-            initial={{ y: 0, opacity: 0.5 }}
-            animate={{ y: -20, opacity: 1 }}
-            transition={{
-              duration: 1.2,
-              repeat: Infinity,
-              repeatType: "reverse",
-              ease: "easeInOut",
-              delay: 0.2,
-            }}
-            className="absolute bottom-5 right-20 w-8 h-8 bg-green-400 rounded-full flex items-center justify-center"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 text-white"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </motion.div>
+              <motion.div
+                initial={{ y: 0, opacity: 0.5 }}
+                animate={{ y: -20, opacity: 1 }}
+                transition={{
+                  duration: 1.2,
+                  repeat: Infinity,
+                  repeatType: "reverse",
+                  ease: "easeInOut",
+                  delay: 0.2,
+                }}
+                className="absolute bottom-5 right-20 w-8 h-8 bg-green-400 rounded-full flex items-center justify-center"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 text-white"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </motion.div>
 
-          <motion.div
-            initial={{ y: 0, opacity: 0.5 }}
-            animate={{ y: -12, opacity: 1 }}
-            transition={{
-              duration: 1.4,
-              repeat: Infinity,
-              repeatType: "reverse",
-              ease: "easeInOut",
-              delay: 0.4,
-            }}
-            className="absolute top-10 left-10 w-8 h-8 bg-blue-400 rounded-full flex items-center justify-center"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 text-white"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" />
-            </svg>
-          </motion.div>
+              <motion.div
+                initial={{ y: 0, opacity: 0.5 }}
+                animate={{ y: -12, opacity: 1 }}
+                transition={{
+                  duration: 1.4,
+                  repeat: Infinity,
+                  repeatType: "reverse",
+                  ease: "easeInOut",
+                  delay: 0.4,
+                }}
+                className="absolute top-10 left-10 w-8 h-8 bg-blue-400 rounded-full flex items-center justify-center"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 text-white"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" />
+                </svg>
+              </motion.div>
+            </>
+          )}
         </div>
 
         {/* Loading spinner */}
@@ -130,12 +151,16 @@ const LoadingScreen = () => {
           <div className="relative">
             <motion.div
               animate={{ rotate: 360 }}
-              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+              transition={{
+                duration: reducedMotion ? 3 : 2,
+                repeat: Infinity,
+                ease: "linear",
+              }}
               className="w-16 h-16 border-4 border-t-purple-600 border-r-pink-500 border-b-indigo-600 border-l-blue-500 rounded-full"
             ></motion.div>
             <motion.div
               initial={{ scale: 0.8 }}
-              animate={{ scale: 1.1 }}
+              animate={{ scale: reducedMotion ? 1 : 1.1 }}
               transition={{
                 duration: 1,
                 repeat: Infinity,
@@ -166,7 +191,10 @@ const LoadingScreen = () => {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 1, delay: 0.5 }}
+          transition={{
+            duration: reducedMotion ? 0.3 : 1,
+            delay: reducedMotion ? 0.1 : 0.5,
+          }}
           className="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-6 shadow-lg"
         >
           <p className="text-white text-center text-lg italic">"{quote}"</p>
@@ -175,7 +203,7 @@ const LoadingScreen = () => {
         {/* Loading text */}
         <motion.div
           initial={{ opacity: 0 }}
-          animate={{ opacity: [0.5, 1, 0.5] }}
+          animate={{ opacity: reducedMotion ? 1 : [0.5, 1, 0.5] }}
           transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
           className="mt-6 text-center text-white text-sm"
         >

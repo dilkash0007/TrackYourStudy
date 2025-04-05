@@ -80,7 +80,7 @@ export const SuggestedSessions = ({
         >
           {suggestedSessions.map((session, index) => {
             const { name: categoryName, color: categoryColor } =
-              getCategoryInfo(session.categoryId);
+              getCategoryInfo(session.category);
             const isExpanded = expandedIndex === index;
 
             return (

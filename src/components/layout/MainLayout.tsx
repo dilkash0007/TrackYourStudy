@@ -19,6 +19,8 @@ import {
 } from "@heroicons/react/24/outline";
 import { HeaderTimer } from "../pomodoro/HeaderTimer";
 import { FloatingTimer } from "../pomodoro/FloatingTimer";
+import { ThemeToggle } from "./ThemeToggle";
+import { useTheme } from "../../hooks/useTheme";
 
 interface NavLinkProps {
   to: string;
@@ -34,48 +36,12 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { name, email, logout, isAuthenticated } = useUserStore();
+  const { currentTheme } = useTheme();
 
   // Close mobile menu when route changes
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
-
-  // Use system theme as default
-  const [theme, setTheme] = useState<"light" | "dark" | "system">("system");
-
-  // Apply theme effect
-  useEffect(() => {
-    const savedTheme = localStorage.getItem("theme") as
-      | "light"
-      | "dark"
-      | "system"
-      | null;
-    if (savedTheme) {
-      setTheme(savedTheme);
-    }
-  }, []);
-
-  const toggleTheme = () => {
-    const newTheme =
-      theme === "light" ? "dark" : theme === "dark" ? "system" : "light";
-
-    setTheme(newTheme);
-    localStorage.setItem("theme", newTheme);
-
-    // Update document theme
-    if (newTheme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else if (newTheme === "light") {
-      document.documentElement.classList.remove("dark");
-    } else {
-      // System theme - check prefers-color-scheme
-      if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-        document.documentElement.classList.add("dark");
-      } else {
-        document.documentElement.classList.remove("dark");
-      }
-    }
-  };
 
   const handleLogout = () => {
     logout();
@@ -130,18 +96,7 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
           <div className="flex items-center space-x-3">
             {/* Header Timer for Mobile */}
             <HeaderTimer />
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
-            >
-              {theme === "light" ? (
-                <SunIcon className="h-5 w-5 text-amber-500" />
-              ) : theme === "dark" ? (
-                <MoonIcon className="h-5 w-5 text-indigo-400" />
-              ) : (
-                <ComputerDesktopIcon className="h-5 w-5 text-gray-500 dark:text-gray-300" />
-              )}
-            </button>
+            <ThemeToggle />
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -359,18 +314,7 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
           </div>
           <div className="p-4 border-t border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
-              <button
-                onClick={toggleTheme}
-                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                {theme === "light" ? (
-                  <SunIcon className="h-5 w-5 text-amber-500" />
-                ) : theme === "dark" ? (
-                  <MoonIcon className="h-5 w-5 text-indigo-400" />
-                ) : (
-                  <ComputerDesktopIcon className="h-5 w-5 text-gray-500 dark:text-gray-300" />
-                )}
-              </button>
+              <ThemeToggle />
               {isAuthenticated ? (
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center">

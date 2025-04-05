@@ -605,9 +605,9 @@ const HomePage: React.FC = () => {
                       </span>
                       <span
                         className={`text-xs px-1.5 py-0.5 rounded ${
-                          task.priority === "high"
+                          task.priority === "High"
                             ? "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300"
-                            : task.priority === "medium"
+                            : task.priority === "Medium"
                             ? "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300"
                             : "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"
                         }`}

@@ -11,6 +11,7 @@ import { StudySession } from "../../store/plannerStore";
 import { useTaskStore } from "../../store/taskStore";
 import { usePomodoroStore } from "../../store/pomodoroStore";
 import { useState } from "react";
+import { TimerType } from "../../store/pomodoroStore";
 
 interface SessionDetailsProps {
   session: StudySession;
@@ -51,7 +52,7 @@ export const SessionDetails = ({
 
   // Start a pomodoro session for this study session
   const handleStartPomodoro = () => {
-    startSession("Study Session", 25, session.id);
+    startSession(TimerType.Focus, 25, session.id);
     // Could update the completed pomodoros count here
     onClose();
   };
@@ -195,7 +196,7 @@ export const SessionDetails = ({
                   <li
                     key={task.id}
                     className={`p-2 rounded-md text-sm ${
-                      task.completed
+                      task.completedAt
                         ? "bg-gray-100 dark:bg-gray-700 line-through text-gray-500 dark:text-gray-400"
                         : "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
                     }`}

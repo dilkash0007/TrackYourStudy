@@ -22,15 +22,15 @@ export const GoalProgress = ({ showHeader = true }: GoalProgressProps) => {
     const totalProgress = activeGoals.reduce((sum, goal) => {
       if (
         !goal ||
-        typeof goal.currentValue === "undefined" ||
-        typeof goal.targetValue === "undefined"
+        typeof goal.currentHours === "undefined" ||
+        typeof goal.targetHours === "undefined"
       ) {
         return sum;
       }
       // Calculate percentage for each goal
       const percentage = Math.min(
         100,
-        (goal.currentValue / Math.max(1, goal.targetValue)) * 100
+        (goal.currentHours / Math.max(1, goal.targetHours)) * 100
       );
       return sum + percentage;
     }, 0);
@@ -86,7 +86,7 @@ export const GoalProgress = ({ showHeader = true }: GoalProgressProps) => {
             const percentage = Math.min(
               100,
               Math.round(
-                (goal.currentValue / Math.max(1, goal.targetValue)) * 100
+                (goal.currentHours / Math.max(1, goal.targetHours)) * 100
               )
             );
 
@@ -97,8 +97,7 @@ export const GoalProgress = ({ showHeader = true }: GoalProgressProps) => {
                     {goal.title || "Unnamed Goal"}
                   </span>
                   <span className="text-sm text-gray-600 dark:text-gray-400">
-                    {goal.currentValue || 0}/{goal.targetValue || 0}{" "}
-                    {goal.unit || "hours"}
+                    {goal.currentHours || 0}/{goal.targetHours || 0} hours
                   </span>
                 </div>
                 <div className="h-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">

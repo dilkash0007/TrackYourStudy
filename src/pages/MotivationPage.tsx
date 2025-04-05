@@ -55,9 +55,9 @@ const MotivationPage = () => {
 
   // Calculate task stats
   const taskStats = useMemo(() => {
-    const completedTasks = tasks.filter((task) => task.completed).length;
+    const completedTasks = tasks.filter((task) => task.completedAt).length;
     const totalTasks = tasks.length;
-    const pendingTasks = tasks.filter((task) => !task.completed);
+    const pendingTasks = tasks.filter((task) => !task.completedAt);
     const taskCompletionRate =
       totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 

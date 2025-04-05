@@ -51,8 +51,8 @@ export const GoalProgressList = ({
 
   // Get progress status color
   const getProgressStatusColor = (goal: StudyGoal) => {
-    const daysRemaining = getDaysRemaining(goal.deadline);
-    const progress = (goal.currentAmount / goal.targetAmount) * 100;
+    const daysRemaining = getDaysRemaining(goal.endDate);
+    const progress = (goal.currentHours / goal.targetHours) * 100;
 
     if (daysRemaining < 0) {
       return {
@@ -74,11 +74,11 @@ export const GoalProgressList = ({
 
     // Calculate if on track based on time passed vs progress made
     const startDate = new Date(goal.startDate);
-    const deadline = new Date(goal.deadline);
+    const endDate = new Date(goal.endDate);
     const today = new Date();
 
     const totalDays = Math.ceil(
-      (deadline.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+      (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
     );
     const daysPassed = Math.ceil(
       (today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
@@ -132,9 +132,9 @@ export const GoalProgressList = ({
           {goals.map((goal) => {
             const progress = Math.min(
               100,
-              Math.round((goal.currentAmount / goal.targetAmount) * 100)
+              Math.round((goal.currentHours / goal.targetHours) * 100)
             );
-            const daysRemaining = getDaysRemaining(goal.deadline);
+            const daysRemaining = getDaysRemaining(goal.endDate);
             const statusColors = getProgressStatusColor(goal);
 
             return (
@@ -155,7 +155,7 @@ export const GoalProgressList = ({
                         {goal.title}
                       </h3>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        {formatDateRange(goal.startDate, goal.deadline)}
+                        {formatDateRange(goal.startDate, goal.endDate)}
                         {daysRemaining > 0 ? (
                           <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700">
                             {daysRemaining} days left
@@ -179,7 +179,7 @@ export const GoalProgressList = ({
                         {progress}%
                       </div>
                       <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {goal.currentAmount} of {goal.targetAmount} {goal.unit}
+                        {goal.currentHours} of {goal.targetHours} hours
                       </div>
                     </div>
                   </div>
@@ -218,7 +218,7 @@ export const GoalProgressList = ({
                           Target
                         </h4>
                         <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                          {goal.targetAmount} {goal.unit}
+                          {goal.targetHours} hours
                         </p>
                       </div>
 
@@ -227,7 +227,7 @@ export const GoalProgressList = ({
                           Current Progress
                         </h4>
                         <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                          {goal.currentAmount} {goal.unit} ({progress}%)
+                          {goal.currentHours} hours ({progress}%)
                         </p>
                       </div>
 
@@ -239,9 +239,9 @@ export const GoalProgressList = ({
                           <div className="space-y-2">
                             {goal.milestones.map((milestone, index) => {
                               const milestoneProgress =
-                                (goal.currentAmount / milestone.target) * 100;
+                                (goal.currentHours / milestone.target) * 100;
                               const isCompleted =
-                                goal.currentAmount >= milestone.target;
+                                goal.currentHours >= milestone.target;
 
                               return (
                                 <div
@@ -254,9 +254,7 @@ export const GoalProgressList = ({
                                 >
                                   <div className="flex justify-between items-center">
                                     <span>{milestone.description}</span>
-                                    <span>
-                                      {milestone.target} {goal.unit}
-                                    </span>
+                                    <span>{milestone.target} hours</span>
                                   </div>
                                   {!isCompleted && (
                                     <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-1.5 mt-2">

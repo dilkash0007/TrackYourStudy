@@ -584,12 +584,12 @@ export const usePlannerStore = create<PlannerStore>()(
 
         // Get pending tasks
         try {
-          const { tasks } = useTaskStore.getState();
-          const pendingTasks = tasks.filter((task) => !task.completed);
+          const tasks = useTaskStore.getState().tasks;
+          const pendingTasks = tasks.filter((task) => !task.completedAt);
 
           // Generate study sessions for high priority tasks
           pendingTasks
-            .filter((task) => task.priority === "high")
+            .filter((task) => task.priority === "High")
             .forEach((task) => {
               // Estimate duration based on task complexity (simple example)
               const durationMinutes = 60; // 1 hour for high priority

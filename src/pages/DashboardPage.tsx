@@ -165,6 +165,18 @@ export const DashboardPage = () => {
     }
   }, []);
 
+  useEffect(() => {
+    if (stats.completedTasks !== unifiedStats.completedTasks) {
+      console.warn(
+        "Task completion count mismatch - verify dashboardStore calculations"
+      );
+      setStats({
+        ...stats,
+        completedTasks: unifiedStats.completedTasks || 0,
+      });
+    }
+  }, [unifiedStats.completedTasks]);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}

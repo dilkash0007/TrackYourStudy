@@ -6,12 +6,17 @@ import {
 } from "@heroicons/react/24/outline";
 import { useUserStore } from "../../store/userStore";
 import type { ThemeMode } from "../../store/userStore";
+import { useTheme } from "../../hooks/useTheme";
 
 export const ThemeToggle = () => {
   // Get theme and updateTheme from store
   const theme = useUserStore((state) => state.theme) || "system";
   const updateTheme = useUserStore((state) => state.updateTheme);
+  const updateUIPreferences = useUserStore(
+    (state) => state.updateUIPreferences
+  );
   const [currentTheme, setCurrentTheme] = useState<ThemeMode>(theme);
+  const { isDark } = useTheme();
 
   const toggleTheme = () => {
     const nextTheme: ThemeMode =
@@ -23,7 +28,9 @@ export const ThemeToggle = () => {
 
     setCurrentTheme(nextTheme);
     updateTheme(nextTheme);
-    localStorage.setItem("theme", nextTheme); // Keep localStorage synced for backwards compatibility
+    // Update both theme and uiPreferences.theme to stay in sync
+    updateUIPreferences({ theme: nextTheme });
+    localStorage.setItem("theme", nextTheme);
     applyTheme(nextTheme);
   };
 
@@ -45,8 +52,11 @@ export const ThemeToggle = () => {
 
   // Sync component with store theme value
   useEffect(() => {
-    setCurrentTheme(theme);
-  }, [theme]);
+    if (theme !== currentTheme) {
+      setCurrentTheme(theme);
+      applyTheme(theme);
+    }
+  }, [theme, currentTheme]);
 
   // Apply theme on initial load and when theme changes
   useEffect(() => {
@@ -56,8 +66,16 @@ export const ThemeToggle = () => {
     if (currentTheme === "system") {
       const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
       const handleChange = () => applyTheme("system");
-      mediaQuery.addEventListener("change", handleChange);
-      return () => mediaQuery.removeEventListener("change", handleChange);
+
+      // Use the correct event listener based on browser support
+      try {
+        mediaQuery.addEventListener("change", handleChange);
+        return () => mediaQuery.removeEventListener("change", handleChange);
+      } catch (e) {
+        // Fallback for older browsers
+        mediaQuery.addListener(handleChange);
+        return () => mediaQuery.removeListener(handleChange);
+      }
     }
   }, [currentTheme]);
 

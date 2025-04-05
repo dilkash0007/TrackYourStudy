@@ -224,78 +224,64 @@ export const useTaskStore = create<TaskState>()(
         });
       },
 
-      applyFilters: (customFilters?) => {
-        const filters = customFilters || get().activeFilters;
-        const {
-          status,
-          priority,
-          category,
-          subject,
-          search,
-          sortBy,
-          sortOrder,
-        } = filters;
+      applyFilters: (customFilters) => {
+        const { tasks, activeFilters } = get();
+        const filters = customFilters || activeFilters;
 
-        let filtered = [...get().tasks];
-
-        // Apply filters
-        if (status !== "All") {
-          filtered = filtered.filter((task) => task.status === status);
-        }
-
-        if (priority !== "All") {
-          filtered = filtered.filter((task) => task.priority === priority);
-        }
-
-        if (category !== "All") {
-          filtered = filtered.filter((task) => task.category === category);
-        }
-
-        if (subject !== "All") {
-          filtered = filtered.filter((task) => task.subject === subject);
-        }
-
-        if (search) {
-          const searchLower = search.toLowerCase();
-          filtered = filtered.filter(
-            (task) =>
-              task.title.toLowerCase().includes(searchLower) ||
-              task.description.toLowerCase().includes(searchLower) ||
-              task.tags.some((tag) => tag.toLowerCase().includes(searchLower))
-          );
-        }
-
-        // Sort tasks
-        filtered.sort((a, b) => {
-          let comparison = 0;
-
-          switch (sortBy) {
-            case "dueDate":
-              comparison =
-                new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
-              break;
-            case "priority":
-              const priorityOrder = { Low: 0, Medium: 1, High: 2, Urgent: 3 };
-              comparison =
-                priorityOrder[a.priority] - priorityOrder[b.priority];
-              break;
-            case "subject":
-              comparison = a.subject.localeCompare(b.subject);
-              break;
-            case "status":
-              const statusOrder = {
-                Pending: 0,
-                "In Progress": 1,
-                Completed: 2,
-              };
-              comparison = statusOrder[a.status] - statusOrder[b.status];
-              break;
+        return tasks.filter((task) => {
+          // Status filter
+          if (
+            filters.status !== "All" &&
+            (filters.status === "Completed" 
+              ? task.completedAt === undefined 
+              : task.status !== filters.status)
+          ) {
+            return false;
           }
 
-          return sortOrder === "asc" ? comparison : -comparison;
-        });
+          // Other filters remain unchanged
+          // Priority filter
+          if (filters.priority !== "All" && task.priority !== filters.priority) {
+            return false;
+          }
 
-        return filtered;
+          // Category filter
+          if (filters.category !== "All" && task.category !== filters.category) {
+            return false;
+          }
+
+          // Subject filter
+          if (filters.subject !== "All" && task.subject !== filters.subject) {
+            return false;
+          }
+
+          // Search filter
+          if (filters.search && filters.search.trim() !== "") {
+            const searchTerm = filters.search.toLowerCase().trim();
+            return (
+              task.title.toLowerCase().includes(searchTerm) ||
+              task.description.toLowerCase().includes(searchTerm) ||
+              task.subject.toLowerCase().includes(searchTerm) ||
+              task.notes.toLowerCase().includes(searchTerm) ||
+              task.tags.some((tag) => tag.toLowerCase().includes(searchTerm))
+            );
+          }
+
+          return true;
+        }).sort((a, b) => {
+          const aValue = a[filters.sortBy];
+          const bValue = b[filters.sortBy];
+
+          if (typeof aValue === "string" && typeof bValue === "string") {
+            const comparison = aValue.localeCompare(bValue);
+            return filters.sortOrder === "asc" ? comparison : -comparison;
+          } else {
+            // For numerical values or dates
+            if (aValue > bValue) return filters.sortOrder === "asc" ? 1 : -1;
+            if (aValue < bValue) return filters.sortOrder === "asc" ? -1 : 1;
+            return 0;
+          }
+        });
       },
 
       // Notes management
@@ -320,16 +306,17 @@ export const useTaskStore = create<TaskState>()(
         const allTasks = get().tasks;
         const now = new Date();
 
-        // Calculate total counts
+        // Calculate total counts with proper completion check
         const total = allTasks.length;
         const completed = allTasks.filter(
-          (task) => task.status === "Completed"
+          (task) => task.completedAt !== undefined
         ).length;
         const pending = allTasks.filter(
-          (task) => task.status !== "Completed"
+          (task) => task.completedAt === undefined
         ).length;
         const overdue = allTasks.filter(
-          (task) => task.status !== "Completed" && new Date(task.dueDate) < now
+          (task) =>
+            task.completedAt === undefined && new Date(task.dueDate) < now
         ).length;
 
         return {
@@ -347,7 +334,7 @@ export const useTaskStore = create<TaskState>()(
         return get()
           .tasks.filter(
             (task) =>
-              task.status !== "Completed" && new Date(task.dueDate) >= now
+              task.completedAt === undefined && new Date(task.dueDate) >= now
           )
           .sort(
             (a, b) =>

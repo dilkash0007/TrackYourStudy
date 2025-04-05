@@ -132,6 +132,7 @@ export const TaskPage = () => {
     priority: "medium",
     tags: "",
     status: "Pending",
+    category: "Homework",
     estimatedTime: 0,
     actualTime: 0,
   });
@@ -259,7 +260,7 @@ export const TaskPage = () => {
         priority: mappedPriority as any,
         dueDate: dueDate.toISOString(),
         status: "Pending",
-        category: "Study",
+        category: "Homework",
         notes: "",
         pomodoroSessions: 0,
         estimatedTime: taskForm.estimatedTime,
@@ -282,6 +283,7 @@ export const TaskPage = () => {
       priority: "medium",
       tags: "",
       status: "Pending",
+      category: "Homework",
       estimatedTime: 0,
       actualTime: 0,
     });
@@ -289,8 +291,10 @@ export const TaskPage = () => {
 
   const toggleTaskCompletion = (task: Task) => {
     const setTaskStatus = useTaskStore.getState().setTaskStatus;
-    const newStatus = task.status === "Completed" ? "Pending" : "Completed";
-    setTaskStatus(task.id, newStatus);
+    setTaskStatus(
+      task.id,
+      task.status === "Completed" ? "Pending" : "Completed"
+    );
   };
 
   const handleDeleteTask = (task: Task) => {

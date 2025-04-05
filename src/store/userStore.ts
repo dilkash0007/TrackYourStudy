@@ -317,8 +317,6 @@ export const useUserStore = create<UserState>()(
       setDetailedProfile: (profileData) => {
         // Extract all possible fields to ensure they're properly typed
         const {
-          name,
-          email,
           bio,
           educationLevel,
           institution,
@@ -332,8 +330,6 @@ export const useUserStore = create<UserState>()(
         const updateObj: Partial<UserState> = {};
 
         // Only add properties that are defined
-        if (name !== undefined) updateObj.name = name;
-        if (email !== undefined) updateObj.email = email;
         if (bio !== undefined) updateObj.bio = bio;
         if (educationLevel !== undefined)
           updateObj.educationLevel = educationLevel;

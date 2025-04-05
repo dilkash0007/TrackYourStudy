@@ -23,7 +23,9 @@ export const CreateSessionModal = ({
   const { tasks } = useTaskStore();
 
   // Filter for incomplete tasks
-  const incompleteTasks = tasks.filter((task) => !task.completed);
+  const incompleteTasks = tasks.filter(
+    (task) => task.completedAt === undefined
+  );
 
   // If editing, get the session data
   const existingSession = editSessionId
@@ -106,7 +108,7 @@ export const CreateSessionModal = ({
         const selectedTask = tasks.find((task) => task.id === taskId);
         if (
           selectedTask &&
-          selectedTask.priority === "high" &&
+          selectedTask.priority === "High" &&
           prev.priority !== "high"
         ) {
           return {
@@ -491,7 +493,7 @@ export const CreateSessionModal = ({
                       className="ml-2 block text-sm text-gray-700 dark:text-gray-300"
                     >
                       {task.title}
-                      {task.priority === "high" && (
+                      {task.priority === "High" && (
                         <span className="ml-2 inline-block px-1 py-0.5 text-xs bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 rounded">
                           High Priority
                         </span>

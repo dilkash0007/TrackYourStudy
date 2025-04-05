@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { RadioGroup } from "@headlessui/react";
 import {
   MoonIcon,
@@ -25,9 +25,40 @@ export const AppearanceSection = () => {
   const [fontStyle, setFontStyle] = useState(
     uiPreferences?.fontStyle || "default"
   );
-  const [reducedMotion, setReducdMotion] = useState(
+  const [reducedMotion, setReducedMotion] = useState(
     uiPreferences?.reducedMotion || false
   );
+
+  // Sync local state with store values when they change
+  useEffect(() => {
+    if (theme && theme !== selectedTheme) {
+      setSelectedTheme(theme);
+    }
+    if (uiPreferences) {
+      if (
+        uiPreferences.primaryColor &&
+        uiPreferences.primaryColor !== selectedColor
+      ) {
+        setSelectedColor(uiPreferences.primaryColor);
+      }
+      if (uiPreferences.fontStyle && uiPreferences.fontStyle !== fontStyle) {
+        setFontStyle(uiPreferences.fontStyle);
+      }
+      if (
+        typeof uiPreferences.reducedMotion === "boolean" &&
+        uiPreferences.reducedMotion !== reducedMotion
+      ) {
+        setReducedMotion(uiPreferences.reducedMotion);
+      }
+    }
+  }, [
+    theme,
+    uiPreferences,
+    selectedTheme,
+    selectedColor,
+    fontStyle,
+    reducedMotion,
+  ]);
 
   // Theme options
   const themeOptions = [
@@ -59,6 +90,20 @@ export const AppearanceSection = () => {
     setSelectedTheme(newTheme);
     updateTheme(newTheme);
     updateUIPreferences({ theme: newTheme });
+
+    // Also update document theme
+    const root = window.document.documentElement;
+    if (newTheme === "system") {
+      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
+        .matches
+        ? "dark"
+        : "light";
+      root.classList.remove("light", "dark");
+      root.classList.add(systemTheme);
+    } else {
+      root.classList.remove("light", "dark");
+      root.classList.add(newTheme);
+    }
   };
 
   const handleColorChange = (newColor: UIColor) => {
@@ -75,7 +120,7 @@ export const AppearanceSection = () => {
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const newValue = e.target.checked;
-    setReducdMotion(newValue);
+    setReducedMotion(newValue);
     updateUIPreferences({ reducedMotion: newValue });
   };
 

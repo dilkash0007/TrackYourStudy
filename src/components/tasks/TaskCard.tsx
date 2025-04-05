@@ -94,7 +94,7 @@ export const TaskCard = ({ task, onEdit }: TaskCardProps) => {
 
   // Check if task is overdue
   const isOverdue = () => {
-    if (task.status === "Completed") return false;
+    if (task.completedAt) return false;
     const now = new Date();
     const dueDate = new Date(task.dueDate);
     return dueDate < now;

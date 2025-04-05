@@ -96,7 +96,7 @@ export const ListViewSessions = ({
               )
               .map((session) => {
                 const { name: categoryName, color: categoryColor } =
-                  getCategoryInfo(session.categoryId);
+                  getCategoryInfo(session.category);
 
                 return (
                   <div
@@ -147,7 +147,7 @@ export const ListViewSessions = ({
 
                     {/* Priority */}
                     <div className="ml-4">
-                      {session.priority !== "normal" && (
+                      {session.priority !== "low" && (
                         <span
                           className={`inline-block px-2 py-0.5 text-xs rounded-full 
                           ${
