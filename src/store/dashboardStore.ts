@@ -242,45 +242,148 @@ const createDefaultDailyQuote = (): {
 let globalUnifiedStats: any = null;
 
 // Add a function to get unified data for all pages
-export const getUnifiedAppStats = () => {
-  // If we already have the stats, return them
+export const getUnifiedAppStats = (): UnifiedStats => {
   if (globalUnifiedStats) {
     return globalUnifiedStats;
   }
 
-  const dashboardStore = useDashboardStore.getState();
-  const plannerStore = usePlannerStore.getState();
-  const taskStore = useTaskStore.getState();
-  const pomodoroStore = usePomodoroStore.getState();
+  try {
+    const dashboardStore = useDashboardStore.getState();
+    const plannerStore = usePlannerStore.getState();
+    const taskStore = useTaskStore.getState();
+    const pomodoroStore = usePomodoroStore.getState();
 
-  // Get session stats
-  const sessionStats = plannerStore.getSessionStats();
+    // Get session stats - with error handling
+    let sessionStats = {
+      totalHours: 0,
+      thisWeekHours: 0,
+      completedSessions: 0,
+      pendingSessions: 0,
+      currentStreak: 0,
+    };
 
-  // Get task summary
-  const taskSummary = taskStore.getTaskSummary();
+    try {
+      if (plannerStore && typeof plannerStore.getSessionStats === "function") {
+        sessionStats = plannerStore.getSessionStats();
+      }
+    } catch (error) {
+      console.error("Error getting session stats:", error);
+    }
 
-  // Get pomodoro insights
-  const pomodoroInsights = pomodoroStore.getFocusInsights();
+    // Get task summary - with error handling
+    let taskSummary = {
+      total: 0,
+      completed: 0,
+      pending: 0,
+      overdue: 0,
+    };
 
-  // Update streak info
-  dashboardStore.updateStreak();
+    try {
+      if (taskStore && typeof taskStore.getTaskSummary === "function") {
+        taskSummary = taskStore.getTaskSummary();
+      }
+    } catch (error) {
+      console.error("Error getting task summary:", error);
+    }
 
-  // Create unified stats object
-  const unifiedStats = {
-    totalHours: sessionStats.totalHours || 0,
-    completedTasks: taskSummary.completed || 0,
-    currentStreak: sessionStats.currentStreak || 0,
-    focusScore: pomodoroInsights.focusScore || 0,
-    streakData: dashboardStore.streakData,
-    taskStats: taskSummary,
-    sessionStats: sessionStats,
-    pomodoroStats: pomodoroInsights,
-  };
+    // Get pomodoro insights - with error handling
+    let pomodoroInsights = {
+      currentStreak: 0,
+      longestStreak: 0,
+      totalFocusTime: 0,
+      todayFocusTime: 0,
+      weeklyFocusTime: [0, 0, 0, 0, 0, 0, 0],
+      focusScore: 0,
+    };
 
-  // Save stats globally
-  globalUnifiedStats = unifiedStats;
+    try {
+      if (
+        pomodoroStore &&
+        typeof pomodoroStore.getFocusInsights === "function"
+      ) {
+        pomodoroInsights = pomodoroStore.getFocusInsights();
+      }
+    } catch (error) {
+      console.error("Error getting pomodoro insights:", error);
+    }
 
-  return unifiedStats;
+    // Update streak info - with error handling
+    try {
+      if (dashboardStore && typeof dashboardStore.updateStreak === "function") {
+        dashboardStore.updateStreak();
+      }
+    } catch (error) {
+      console.error("Error updating streak:", error);
+    }
+
+    // Create unified stats object
+    const unifiedStats = {
+      totalHours: sessionStats.totalHours || 0,
+      completedTasks: taskSummary.completed || 0,
+      currentStreak: sessionStats.currentStreak || 0,
+      focusScore: pomodoroInsights.focusScore || 0,
+      streakData: dashboardStore?.streakData || {
+        currentStreak: 0,
+        longestStreak: 0,
+        lastStudyDate: null,
+      },
+      taskStats: taskSummary,
+      sessionStats: sessionStats,
+      pomodoroStats: {
+        ...pomodoroInsights,
+        weeklyFocusData: {
+          currentWeek: pomodoroInsights.weeklyFocusTime || [
+            0, 0, 0, 0, 0, 0, 0,
+          ],
+          previousWeek: [0, 0, 0, 0, 0, 0, 0],
+        },
+      },
+    };
+
+    // Save stats globally
+    globalUnifiedStats = unifiedStats;
+
+    return unifiedStats;
+  } catch (error) {
+    console.error("Error getting unified app stats:", error);
+    // Return default stats if an error occurs
+    return {
+      totalHours: 0,
+      completedTasks: 0,
+      currentStreak: 0,
+      focusScore: 0,
+      streakData: {
+        currentStreak: 0,
+        longestStreak: 0,
+        lastStudyDate: null,
+      },
+      taskStats: {
+        total: 0,
+        completed: 0,
+        pending: 0,
+        overdue: 0,
+      },
+      sessionStats: {
+        totalHours: 0,
+        thisWeekHours: 0,
+        completedSessions: 0,
+        pendingSessions: 0,
+        currentStreak: 0,
+      },
+      pomodoroStats: {
+        currentStreak: 0,
+        longestStreak: 0,
+        totalFocusTime: 0,
+        todayFocusTime: 0,
+        weeklyFocusTime: [0, 0, 0, 0, 0, 0, 0],
+        focusScore: 0,
+        weeklyFocusData: {
+          currentWeek: [0, 0, 0, 0, 0, 0, 0],
+          previousWeek: [0, 0, 0, 0, 0, 0, 0],
+        },
+      },
+    };
+  }
 };
 
 // Function to update the global stats (call this when data changes)

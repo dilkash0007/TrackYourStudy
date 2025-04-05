@@ -685,12 +685,15 @@ export const usePlannerStore = create<PlannerStore>()(
       getUpcomingSessions: () => {
         const now = new Date();
         return get()
-          .sessions.filter((session) => new Date(session.startTime) > now)
+          .sessions.filter((session) => {
+            // Filter sessions with future start times and not completed
+            return new Date(session.startTime) > now && !session.isCompleted;
+          })
           .sort(
             (a, b) =>
               new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
           )
-          .slice(0, 5);
+          .slice(0, 5); // Return only the next 5 upcoming sessions
       },
 
       getSessionsForToday: () => {

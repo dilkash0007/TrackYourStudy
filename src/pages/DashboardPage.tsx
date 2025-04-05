@@ -82,16 +82,30 @@ export const DashboardPage = () => {
   );
 
   // Get upcoming sessions
-  const upcomingSessions = plannerStore.getUpcomingSessions
-    ? plannerStore.getUpcomingSessions().map((s) => ({
-        id: s.id,
-        title: s.title,
-        subject: s.category,
-        date: new Date(s.startTime),
-        duration: s.duration || 0,
-        location: s.location || "",
-      }))
-    : [];
+  const upcomingSessions = (() => {
+    try {
+      const store = usePlannerStore.getState();
+      if (store && typeof store.getUpcomingSessions === "function") {
+        return store.getUpcomingSessions().map((s) => ({
+          id: s.id,
+          title: s.title,
+          subject: s.category || "General", // Add fallback value
+          date: new Date(s.startTime),
+          duration:
+            Math.round(
+              (new Date(s.endTime).getTime() -
+                new Date(s.startTime).getTime()) /
+                (1000 * 60)
+            ) || 60, // Calculate duration in minutes with fallback
+          location: "",
+        }));
+      }
+      return [];
+    } catch (error) {
+      console.error("Error getting upcoming sessions:", error);
+      return [];
+    }
+  })();
 
   // Get user data (with error handling)
   const [recentNotes, setRecentNotes] = useState<any[]>([]);
