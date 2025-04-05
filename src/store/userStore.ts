@@ -250,6 +250,14 @@ interface UserState {
   birthday: string;
   phoneNumber: string;
   location: string;
+  theme: ThemeMode;
+  uiPreferences: UIPreferences;
+  notificationPreferences: NotificationPreferences;
+  pomodoroPreferences: PomodoroPreferences;
+  securitySettings: SecuritySettings;
+  userProfile: UserProfile;
+  userGoals: UserGoal[];
+  goals: UserGoal[];
   setUserProfile: (name: string, email: string) => void;
   setDetailedProfile: (profileData: {
     bio?: string;
@@ -265,6 +273,21 @@ interface UserState {
   login: (email: string, password: string) => boolean;
   signup: (name: string, email: string, password: string) => void;
   logout: () => void;
+  updateTheme: (theme: ThemeMode) => void;
+  updateUIPreferences: (preferences: Partial<UIPreferences>) => void;
+  updateNotificationPreferences: (
+    preferences: Partial<NotificationPreferences>
+  ) => void;
+  updatePomodoroPreferences: (
+    preferences: Partial<PomodoroPreferences>
+  ) => void;
+  updateSecuritySettings: (settings: Partial<SecuritySettings>) => void;
+  addGoal: (goal: Omit<UserGoal, "id">) => void;
+  updateGoal: (id: string, goalData: Partial<UserGoal>) => void;
+  deleteGoal: (id: string) => void;
+  getNotes: () => UserNote[];
+  getPlaylists: () => UserPlaylist[];
+  getLeaderboard: () => LeaderboardEntry[];
 }
 
 export const useUserStore = create<UserState>()(
@@ -282,6 +305,14 @@ export const useUserStore = create<UserState>()(
       birthday: "",
       phoneNumber: "",
       location: "",
+      theme: "system" as ThemeMode,
+      uiPreferences: createDefaultUIPreferences(),
+      notificationPreferences: createDefaultNotificationPreferences(),
+      pomodoroPreferences: createDefaultPomodoroPreferences(),
+      securitySettings: createDefaultSecuritySettings(),
+      userProfile: createDefaultProfile(),
+      userGoals: createDefaultGoals(),
+      goals: createDefaultGoals(),
       setUserProfile: (name: string, email: string) => set({ name, email }),
       setDetailedProfile: (profileData) => {
         // Extract all possible fields to ensure they're properly typed
@@ -354,6 +385,89 @@ export const useUserStore = create<UserState>()(
       logout: () => {
         // Only set authentication status to false, preserve user details
         set({ isAuthenticated: false });
+      },
+      updateTheme: (theme: ThemeMode) => {
+        set({ theme });
+        const uiPreferences = get().uiPreferences;
+        set({ uiPreferences: { ...uiPreferences, theme } });
+      },
+      updateUIPreferences: (preferences: Partial<UIPreferences>) =>
+        set((state) => ({
+          uiPreferences: { ...state.uiPreferences, ...preferences },
+        })),
+      updateNotificationPreferences: (
+        preferences: Partial<NotificationPreferences>
+      ) =>
+        set((state) => ({
+          notificationPreferences: {
+            ...state.notificationPreferences,
+            ...preferences,
+          },
+        })),
+      updatePomodoroPreferences: (preferences: Partial<PomodoroPreferences>) =>
+        set((state) => ({
+          pomodoroPreferences: { ...state.pomodoroPreferences, ...preferences },
+        })),
+      updateSecuritySettings: (settings: Partial<SecuritySettings>) =>
+        set((state) => ({
+          securitySettings: { ...state.securitySettings, ...settings },
+        })),
+      addGoal: (goal: Omit<UserGoal, "id">) =>
+        set((state) => ({
+          goals: [...state.goals, { ...goal, id: uuidv4() }],
+          userGoals: [...state.userGoals, { ...goal, id: uuidv4() }],
+        })),
+      updateGoal: (id: string, goalData: Partial<UserGoal>) =>
+        set((state) => ({
+          goals: state.goals.map((goal) =>
+            goal.id === id ? { ...goal, ...goalData } : goal
+          ),
+          userGoals: state.userGoals.map((goal) =>
+            goal.id === id ? { ...goal, ...goalData } : goal
+          ),
+        })),
+      deleteGoal: (id: string) =>
+        set((state) => ({
+          goals: state.goals.filter((goal) => goal.id !== id),
+          userGoals: state.userGoals.filter((goal) => goal.id !== id),
+        })),
+      getNotes: () => {
+        // Return mock notes
+        return [
+          {
+            id: "note1",
+            title: "Study Notes",
+            content: "Important study material",
+            subject: "Computer Science",
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            tags: ["Study", "CS"],
+          },
+        ];
+      },
+      getPlaylists: () => {
+        // Return mock playlists
+        return [
+          {
+            id: "playlist1",
+            name: "Study Music",
+            url: "https://example.com/playlist",
+            category: "Focus",
+          },
+        ];
+      },
+      getLeaderboard: () => {
+        // Return mock leaderboard
+        return [
+          {
+            id: "user1",
+            username: "TopStudent",
+            avatar: getRandomAvatar(),
+            score: 1000,
+            rank: 1,
+            rankChange: 0,
+          },
+        ];
       },
     }),
     {

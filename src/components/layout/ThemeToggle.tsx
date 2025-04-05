@@ -5,32 +5,29 @@ import {
   ComputerDesktopIcon,
 } from "@heroicons/react/24/outline";
 import { useUserStore } from "../../store/userStore";
+import type { ThemeMode } from "../../store/userStore";
 
 export const ThemeToggle = () => {
-  // Use a local theme state since theme is not in the user store
-  const [theme, setTheme] = useState(() => {
-    // Try to get the saved theme from localStorage
-    const savedTheme = localStorage.getItem("theme") as
-      | "light"
-      | "dark"
-      | "system"
-      | null;
-    return savedTheme || "system";
-  });
+  // Get theme and updateTheme from store
+  const theme = useUserStore((state) => state.theme) || "system";
+  const updateTheme = useUserStore((state) => state.updateTheme);
+  const [currentTheme, setCurrentTheme] = useState<ThemeMode>(theme);
 
   const toggleTheme = () => {
-    const nextTheme =
-      theme === "light" ? "dark" : theme === "dark" ? "system" : "light";
-    setTheme(nextTheme);
+    const nextTheme: ThemeMode =
+      currentTheme === "light"
+        ? "dark"
+        : currentTheme === "dark"
+        ? "system"
+        : "light";
 
-    // Save the theme to localStorage
-    localStorage.setItem("theme", nextTheme);
-
-    // Apply the theme directly
+    setCurrentTheme(nextTheme);
+    updateTheme(nextTheme);
+    localStorage.setItem("theme", nextTheme); // Keep localStorage synced for backwards compatibility
     applyTheme(nextTheme);
   };
 
-  const applyTheme = (themeValue: string) => {
+  const applyTheme = (themeValue: ThemeMode) => {
     const root = window.document.documentElement;
 
     if (themeValue === "system") {
@@ -46,18 +43,23 @@ export const ThemeToggle = () => {
     }
   };
 
-  // Apply theme on initial load
+  // Sync component with store theme value
   useEffect(() => {
-    applyTheme(theme);
+    setCurrentTheme(theme);
+  }, [theme]);
+
+  // Apply theme on initial load and when theme changes
+  useEffect(() => {
+    applyTheme(currentTheme);
 
     // Listen for system theme changes if using system theme
-    if (theme === "system") {
+    if (currentTheme === "system") {
       const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
       const handleChange = () => applyTheme("system");
       mediaQuery.addEventListener("change", handleChange);
       return () => mediaQuery.removeEventListener("change", handleChange);
     }
-  }, [theme]);
+  }, [currentTheme]);
 
   return (
     <button
@@ -65,9 +67,9 @@ export const ThemeToggle = () => {
       className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
       aria-label="Toggle theme"
     >
-      {theme === "light" ? (
+      {currentTheme === "light" ? (
         <SunIcon className="h-5 w-5 text-yellow-500" />
-      ) : theme === "dark" ? (
+      ) : currentTheme === "dark" ? (
         <MoonIcon className="h-5 w-5 text-blue-500" />
       ) : (
         <ComputerDesktopIcon className="h-5 w-5 text-gray-500 dark:text-gray-300" />
